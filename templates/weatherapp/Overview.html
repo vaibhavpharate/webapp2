@@ -1,0 +1,114 @@
+{% extends 'weatherapp/base.html' %}
+{% block title_block %}
+    Overview Dashboard
+{% endblock %}
+{% block style_block %}
+    <style>
+        {#.div_before_table {#}
+        {#    overflow: hidden;#}
+        {#    overflow-y: scroll;#}
+        {#    height: 500px;#}
+
+
+        .fixed {
+            top: 0;
+            z-index: 2;
+            position: sticky;
+            background-color: white;
+        }
+    </style>
+{% endblock %}
+{% block content_block %}
+    {% include 'weatherapp/admin_nav.html' %}
+    <div class="container-fluid">
+        <div class="row mx-0">
+            <div class="col-10 mx-auto">
+                <div class="py-2 px-2">
+
+                </div>
+            </div>
+        </div>
+
+        <div class="table_div div_before_table">
+            <div class="col-11 mx-auto">
+                <table class="table table-striped" id="overview">
+                    <thead class="bg-secondary text-white fixed">
+                    <tr>
+                        <th>Site Name</th>
+                        {% if user.groups.all.0.name == 'Admin' %}
+                            <th>Client Name</th>
+                        {% endif %}
+
+                        <th>State</th>
+                        <th>Site Status</th>
+                        <th>Avg. Capacity</th>
+                        <th>Forecast Till</th>
+                        <th>Actual Available till</th>
+                        <th>Days since Actual Data Update</th>
+                    </tr>
+                    </thead>
+                    <tbody id="overview_body">
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+
+            $('#overview').DataTable({
+
+                // Set the 1st column of the
+                // DataTable to ascending order
+                // and the 2nd to descending order
+                fixedHeader: true,
+                "ajax": {
+                    data: {'username': '{{ user.username}}', 'group': '{{ user.groups.all.0 }}'},
+                    dataType: 'json',
+                    url: '{% url 'get_overview_data' %}',
+
+
+                },
+                dataSrc: 'data',
+                columns: [
+                    {data: 'site_name'},
+                    {% if user.groups.all.0.name == 'Admin' %}
+                            {data: 'client_name'},
+                        {% endif %}
+                    {data: 'state'},
+                    {data: 'site_status'},
+                    {data: 'capacity'},
+                    {data: 'max_date_wrf'},
+                    {data: 'max_actual'},
+                    {data: 'days_till'}
+                ],
+
+                order: [[0, 'asc'], [1, 'desc']],
+
+                initComplete: function () {
+                    this.api().columns([0, 1, 2, 3]).every(function () {
+                        var column = this;
+                        $(column.header()).append("<br>")
+                        var select = $('<select><option value=""></option></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex(
+                                    $(this).val()
+                                );
+
+                                column
+                                    .search(val ? '^' + val + '$' : '', true, false)
+                                    .draw();
+                            });
+                        column.data().unique().sort().each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>')
+                        });
+                    });
+                }
+
+            });
+        });
+    </script>
+{% endblock %}

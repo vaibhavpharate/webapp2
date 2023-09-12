@@ -1,0 +1,133 @@
+{% extends 'weatherapp/base.html' %}
+{% block title_block %}
+    Warnings Dashboard
+{% endblock %}
+{% block style_block %}
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block content_block %}
+    {% include 'weatherapp/admin_nav.html' %}
+    {% include 'weatherapp/skycaster_logo.html' %}
+    <div class="container-fluid mx-0 py-2">
+        <div class="row mx-0">
+            {% if user.groups.all.0.name == "Admin" %}
+                <div class="col-3">
+
+                    <div class="forms">
+                        <label for="select_client">Select Client</label>
+                        <select name="select_client" class="form-select" id="select_client"></select>
+                    </div>
+                </div>
+
+            {% endif %}
+            <div class="col-3">
+                <div class="forms">
+                    <label for="set_index" class="form-label">Select Cloud Index</label>
+                    <input type="range" class="form-range" name="set_index" id="set_index" min=0 max=10 value=1>
+                </div>
+            </div>
+        </div>
+        <div class="row mx-0">
+            <div class="col-6 map_div">
+
+
+                <div class="card figure_cards">
+                    <div class="card-header">
+                        <h4 class="text-center mb-0">
+                            Warning Site Map
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% include 'weatherapp/loading.html' %}
+                        <div class="canvas_section1" id="canvas_section1"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 warning_div">
+
+                <div class="card figure_cards">
+                    <div class="card-header">
+                        <h4 class="text-center mb-0">
+                            Warning Indicators
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% include 'weatherapp/loading.html' %}
+                        <div class="canvas_section1" id="canvas_section2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        {#        {{ user.groups.all.0 }}#}
+        $(document).ready(function () {
+            const delay = ms => new Promise(res => setTimeout(res, ms));
+            let client = "NA"
+            $('.center').show()
+            {% if user.groups.all.0.name == "Admin" %}
+                $.ajax({
+                    async: false,
+                    url: "{% url 'get_clients' %}",
+                    dataType: 'json',
+                    data: {'username': '{{ user.username }}', 'group': '{{ user.groups.all.0 }}'},
+
+                    success: function (data, status) {
+                        let clients = data.data;
+                        {#console.log(clients);#}
+                        for (s in clients) $('#select_client').append(
+                            "<option value='" + clients[s].clients + "'" + " >" + clients[s].clients + "</option>"
+                        );
+
+                    },
+                    complete: function (data) {
+                         get_map_data();
+                    }
+                })
+                {#console.log("Worlds")#}
+
+            {% else %}
+
+                client = "{{ user.username }}";
+
+                get_map_data();
+            {% endif %}
+            {#console.log(client);#}
+
+            function get_map_data() {
+                $('.center').show()
+                {% if user.groups.all.0.name == "Admin" %}
+                    client = $("#select_client").val();
+                {% else %}
+                    client = "{{ user.username }}";
+                {% endif %}
+                $.ajax({
+                    url:{% url 'get_warnings_data' %},
+                    async: false,
+                    dataType: 'json',
+                    data: {'client': client, 'index': $('#set_index').val()},
+                    success: function (res, status) {
+                        var graphs = JSON.parse(res.data);
+                        $('.center').hide()
+                        Plotly.newPlot("canvas_section1", graphs, {})
+                        var histos = JSON.parse(res.histos);
+                        Plotly.newPlot("canvas_section2", histos, {})
+                    }
+                })
+            }
+
+            $('#set_index').unbind('change').change(function () {
+                {#console.log($(this).val())#}
+                get_map_data();
+            });
+            {% if user.groups.all.0.name == "Admin" %}
+            $('#select_client').unbind('change').change(function () {
+                {#console.log($(this).val())#}
+                get_map_data();
+            });
+            {% endif %}
+        });
+
+    </script>
+{% endblock %}

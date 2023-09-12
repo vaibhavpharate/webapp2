@@ -1,0 +1,160 @@
+
+{% extends 'weatherapp/base.html' %}
+
+{% block title_block %}
+    Homepage
+{% endblock %}
+{% block style_block %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script
+{% endblock %}
+{% block content_block %}
+    {% include 'weatherapp/admin_nav.html' %}
+    {% include 'weatherapp/skycaster_logo.html' %}
+    <div class="container-fluid">
+        <div class="row mx-0 justify-content-end">
+            <div class="col-10"></div>
+            <div class="col-2 mx-auto p-2 rounded bg-primary text-center">
+                <h5 class="mb-0 text-white">Last Updated</h5>
+                <p class="text-center text-white mb-0" id="updated_date">
+                </p>
+            </div>
+        </div>
+        <div class="row mx-0 p-1 align-items-center">
+
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-header bg-secondary">
+                        <div class="row mx-0">
+                            <div class="col-6">
+                                <h4 class="text-white">Overview Data</h4>
+                            </div>
+                            <div class="col-4 text-right">
+                                <a href="{% url "overview" %}" class="btn btn-warning">Visit Overview</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="table striped" id="overview_table">
+                            <thead>
+                            <tr>
+
+                                {% if user.groups.all.0.name == "Admin" %}
+                                    <th>Client Name</th>
+                                {% endif %}
+                                <th>Site Name</th>
+                                <th>State</th>
+                                <th>Site Status</th>
+                                <th>Forecast Updated Till</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card figure_cards">
+                    <div class="card-header">
+                        <h4 class="text-center mb-0">
+                            Warning Map
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% include 'weatherapp/loading.html' %}
+                        <div class="figure_div w-100" id="canvas_section2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card figure_cards">
+                    <div class="card-header">
+                        <h4 class="text-center mb-0">
+                            Forecast Warning Chart
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% include 'weatherapp/loading.html' %}
+                        <div class="figure_div w-100" id="canvas_section1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        $(document).ready(function () {
+            let updated = new Date();
+            updated = moment(updated).format("MMMM Do YYYY, h:mm a")
+            $('#updated_date').html(updated);
+
+            var table_data = []
+
+            function main_call() {
+
+                $.ajax({
+                    dataType: 'json',
+                    data: {'username': '{{user.username}}', 'group': '{{user.groups.all.0.name}}'},
+
+                    url: "{% url 'get_homepage_data' %}",
+                    success: function (data) {
+
+                        {#table_data = data.data;#}
+                        $('.center').hide()
+                        var graphs = JSON.parse(data.graphs_data);
+                        Plotly.newPlot("canvas_section1", graphs, {});
+                        var maps = JSON.parse(data.maps_data);
+                        Plotly.newPlot("canvas_section2", maps, {});
+                    }
+                })
+
+
+            }
+
+
+            main_call();
+
+            // Overview Table
+            $('#overview_table').DataTable({
+                fixedHeader: false,
+                "ajax": {
+                    data: {'username': '{{ user.username}}', 'group': '{{ user.groups.all.0.name }}'},
+                    dataType: 'json',
+
+                    url: '{% url 'get_overview_data' %}',
+                    "dataSrc": function (json) {
+                        //Make your callback here.
+
+                        return json.data;
+                    },
+
+                },
+                pageLength: 5,
+                columns: [
+
+                    {data: 'site_name'},
+                    {% if user.groups.all.0.name == 'Admin' %}
+                        {data: 'client_name'},
+                    {% endif %}
+
+                    {data: 'site_status'},
+                    {data: 'state'},
+                    {
+                        data: 'max_date_wrf', render: function (data, type, row) {
+                            if (type === "sort" || type === "type") {
+                                return data;
+                            }
+                            return moment(data).format("MMMM Do YYYY, h:mm a");
+                        }
+                    },
+
+
+                ],
+
+
+            });
+
+        })
+    </script>
+{% endblock %}

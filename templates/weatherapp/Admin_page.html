@@ -1,0 +1,55 @@
+{% extends 'weatherapp/base.html' %}
+{% load has_group %}
+{% block title_block %} Admin Page {% endblock %}
+{% block content_block %}
+    {% include 'weatherapp/admin_nav.html' %}
+    <div class="container">
+        <div class="mt-2 p-2 bg-light text-white rounded">
+            <div class="row">
+{#                <div class="col-11 mx-auto">#}
+{#                    <div class="py-2">#}
+{#                        {% for message in messages %}#}
+{#                            <div class="alert alert-{{ message.tags }}">#}
+{#                                {{ message }}#}
+{#                            </div>#}
+{#                        {% endfor %}#}
+{#                    </div>#}
+{#                </div>#}
+            </div>
+        </div>
+        {#        {{ user.is_superuser }}#}
+        <div class="row py-2 my-2">
+            {% if groups %}
+            {% else %}
+                <div class="col-6 mx-auto">
+                    <a href="{% url 'create_groups' %}" class="btn btn-primary">Create Groups</a>
+                </div>
+            {% endif %}
+            <div class="col-6 mx-auto">
+                <a href="{% url 'create_client' %}" class="btn btn-success">Create Client</a>
+                <br>
+                <table class="table my-2">
+                    <thead class="bg-primary text-white">
+                    <tr>
+                        <th>Client ID</th>
+                        <th>Client username</th>
+                        <th>Client Role Type</th>
+                        <th>Active</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for c in clients %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{{ c.username }}</td>
+                            <td>{{ c.role_type }}</td>
+                            <td>{{ c.is_active }}</td>
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

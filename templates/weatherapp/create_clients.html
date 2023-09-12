@@ -1,0 +1,26 @@
+{% extends 'weatherapp/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title_block %} Create Clients {% endblock %}
+{% block content_block %}
+    {% include 'weatherapp/admin_nav.html' %}
+    <div class="container py-3 mx-auto">
+{#        {% include 'weatherapp/message_box.html' %}#}
+        <div class="row">
+            <div class="col-6 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-success">
+                        <h4 class="text-white">Create Clients</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ client_form | crispy }}
+                            <button class="btn btn-primary">Create Client</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

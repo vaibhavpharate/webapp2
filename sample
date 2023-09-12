@@ -1,0 +1,39 @@
+$('#forecast_table').DataTable({
+                    fixedHeader: false,
+                    data: table_data,
+                    columns: [
+                        {
+                            data: 'timestamp', render: function (data, type, row) {
+                                if (type === "sort" || type === "type") {
+                                    return data;
+                                }
+                                return moment(data).format("MMMM Do YYYY, h:mm a");
+                            }
+                        },
+                        {data: 'site_name'},
+                        {data: 'Cloud Description'},
+                        {data: 'Warning Description'},
+                    ],
+                    pageLength: 5,
+                    initComplete: function () {
+                        this.api().columns([1, 2, 3]).every(function () {
+                            var column = this;
+                            $(column.header()).append("<br>")
+                            var select = $('<select><option value=""></option></select>')
+                                .appendTo($(column.header()))
+                                .on('change', function () {
+                                    var val = $.fn.dataTable.util.escapeRegex(
+                                        $(this).val()
+                                    );
+
+                                    column
+                                        .search(val ? '^' + val + '$' : '', true, false)
+                                        .draw();
+                                });
+                            column.data().unique().sort().each(function (d, j) {
+                                select.append('<option value="' + d + '">' + d.toString().substring(0, 12) + '</option>')
+                            });
+                        });
+                    }
+
+                });
