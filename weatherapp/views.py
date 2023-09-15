@@ -438,7 +438,10 @@ def get_fw_data(request):
                 pad=1
             ),
         )
-        print(mn)
+
+
+
+        # print(mn)
         # plt = px.line(data_frame=df,x='timestamp',y=['ghi_forecast','ghi_actual'])
         graphJSON = json.dumps(fig, cls=enc_pltjson)
         graphJson2 = json.dumps(fig2, cls=enc_pltjson)
@@ -573,7 +576,7 @@ def get_warnings_data(request):
                                 , mapbox_style='open-street-map')
         fig.update_coloraxes(showscale=False)
         fig.update_layout(
-            margin={'l': 0, 't': 0, 'b': 0, 'r': 0}, )
+            margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
         graphJSON = json.dumps(fig, cls=enc_pltjson)
 
         three_plus = datetime.now() + timedelta(hours=3)
@@ -584,16 +587,19 @@ def get_warnings_data(request):
         # sites_list.sort()
         # print(sites_list)
         # print(fn1.info())
-        fig2 = make_subplots(rows=len(sites_list), cols=1)
+        fig2 = make_subplots(rows=len(sites_list), cols=1,subplot_titles = sites_list)
         for idx in range(len(sites_list)):
             fig2.add_trace(go.Bar(
                 x=fn1.loc[fn1['site_name'] == sites_list[idx], 'timestamp'],
                 y=fn1.loc[fn1['site_name'] == sites_list[idx], 'forecast_cloud_index'], name=sites_list[idx]),
                 row=idx + 1, col=1)
+            fig2.add_hline(y=0.1,line_width=1, line_dash="dash", line_color="grey", opacity=0.7,)
         # print(fn1)
         fig.update_layout(height=700, title_text="Forecast Cloud Index")
 
-        fig2.update_layout(height=1000, title_text="Forecast Cloud Index")
+        fig2.update_layout(height=700,showlegend=False,)
+        fig2.update_layout(
+            margin={'l': 0, 't': 30, 'b': 0, 'r': 0})
         graphJSON2 = json.dumps(fig2, cls=enc_pltjson)
 
         return JsonResponse({'data': graphJSON,'histos':graphJSON2}, status=200, safe=False)
@@ -691,7 +697,8 @@ def get_homepage_data(request):
             height=500,
             xaxis_title="Timestamp",
             yaxis_title="Readings",
-            legend_title="Legends",
+            # legend_title="Legends",
+
             font=dict(
                 family="Arial",
                 size=15,

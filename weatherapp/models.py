@@ -12,7 +12,7 @@ class Clients(AbstractUser):
         CLIENT = "CLIENT", "Client"
 
     username = models.CharField(max_length=14, unique=True)
-    client_short = models.CharField(max_length=10, unique=True)
+    client_short = models.CharField(max_length=10)
     role_type = models.CharField(max_length=10,choices=Roles.choices,default=Roles.CLIENT)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)

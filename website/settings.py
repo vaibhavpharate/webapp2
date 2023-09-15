@@ -81,8 +81,16 @@ WSGI_APPLICATION = 'website.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': BASE_DIR / 'db.sqlite3',/
+        'OPTIONS': {
+            'options': '-c search_path=djangos'
+        },
+        'NAME': 'postgres',
+        'USER': 'admin123',
+        'PASSWORD': 'tensor123',
+        'HOST': 'tensordb1.cn6gzof6sqbw.us-east-2.rds.amazonaws.com',  # Or an IP Address that your DB is hosted on
+        'PORT': '5432',
     },
     'dashboarding': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -131,10 +139,9 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-
-MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = 'media/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
