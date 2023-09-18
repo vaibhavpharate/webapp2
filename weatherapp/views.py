@@ -725,3 +725,11 @@ def get_homepage_data(request):
         #     return JsonResponse({'data':"Hello World"},status=200,safe=False)
         # else:
         #     return redirect('403')
+# @login_required('client_login')
+# def user_update(request,id:int):
+#     user_details = Clients.objects.get(id=id)
+#     if len(user_details.username)<0:
+#         return redirect('homepage')
+#     else:
+#         form = ClientsForm(data=user_details)
+#         return render(request,template_name='weatherapp/update_user.html',context={'form':form})

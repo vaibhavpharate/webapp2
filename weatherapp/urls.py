@@ -21,6 +21,8 @@ urlpatterns = [
     path('forecast_warning/', forecast_warning, name='forecast_warning'),
     path('overview/', overview_dash, name='overview'),
     path('warnings/', warnings_dash, name='warnings'),
+    # path('user_update/<int:pk>',user_update,name='update_user'),
+
 
     ## Ajax table calls
     path('get_forecast_table/', get_forecast_table, name='get_forecast_table'),

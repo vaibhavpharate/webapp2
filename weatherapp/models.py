@@ -12,6 +12,7 @@ class Clients(AbstractUser):
         CLIENT = "CLIENT", "Client"
 
     username = models.CharField(max_length=14, unique=True)
+    email = models.EmailField(max_length=200,unique=True)
     client_short = models.CharField(max_length=10)
     role_type = models.CharField(max_length=10,choices=Roles.choices,default=Roles.CLIENT)
     is_active = models.BooleanField(default=True)
@@ -19,6 +20,6 @@ class Clients(AbstractUser):
 
     date_updated = models.DateTimeField(auto_now=True)
     objects = UserManager()
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 

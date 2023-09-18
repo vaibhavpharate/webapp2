@@ -5,4 +5,4 @@ from .models import Clients
 class ClientsForm(UserCreationForm):
     class Meta:
         model = Clients
-        fields = ['username','password1','password2','client_short','role_type']
+        fields = ['username','email','password1','password2','client_short','role_type']
