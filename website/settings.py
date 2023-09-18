@@ -88,7 +88,7 @@ DATABASES = {
         },
         'NAME': 'postgres',
         'USER': 'admin123',
-        'PASSWORD': 'tensor123',
+            'PASSWORD': 'tensor123',
         'HOST': 'tensordb1.cn6gzof6sqbw.us-east-2.rds.amazonaws.com',  # Or an IP Address that your DB is hosted on
         'PORT': '5432',
     },
