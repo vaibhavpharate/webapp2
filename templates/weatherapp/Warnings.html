@@ -110,6 +110,7 @@
                     success: function (res, status) {
                         var graphs = JSON.parse(res.data);
                         $('.center').hide()
+                        $('.canvas_section1').show()
                         Plotly.newPlot("canvas_section1", graphs, {})
                         var histos = JSON.parse(res.histos);
                         Plotly.newPlot("canvas_section2", histos, {})
@@ -118,7 +119,9 @@
             }
 
             $('#set_index').unbind('change').change(function () {
+                $('.canvas_section1').hide()
                 {#console.log($(this).val())#}
+
                 get_map_data();
             });
             {% if user.groups.all.0.name == "Admin" %}

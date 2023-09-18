@@ -594,6 +594,7 @@ def get_warnings_data(request):
                 y=fn1.loc[fn1['site_name'] == sites_list[idx], 'forecast_cloud_index'], name=sites_list[idx]),
                 row=idx + 1, col=1)
             fig2.add_hline(y=0.1,line_width=1, line_dash="dash", line_color="grey", opacity=0.7,)
+            fig2.update_yaxes( range=[0.0, 0.9], row=idx + 1, col=1)
         # print(fn1)
         fig.update_layout(height=700, title_text="Forecast Cloud Index")
 
@@ -603,6 +604,8 @@ def get_warnings_data(request):
         graphJSON2 = json.dumps(fig2, cls=enc_pltjson)
 
         return JsonResponse({'data': graphJSON,'histos':graphJSON2}, status=200, safe=False)
+
+
 
 
 def get_homepage_data(request):
