@@ -25,7 +25,6 @@
         <div class="col-11 mx-auto py-2">
             <div class="table_div">
                 <div class="input-group input-daterange py-4">
-
                     <input type="date" id="min-date" class="form-control date-range-filter"
                            data-date-format="yyyy-mm-dd" placeholder="From:">
 
@@ -36,7 +35,7 @@
 
                 </div>
                 <table class="table border forecast_table table-striped" id="forecast_table" border="1">
-                    <thead class="bg-primary text-white text-center">
+                    <thead class="secondary text-white text-center">
                     <tr>
                         {% if user.groups.all.0.name == 'Admin' %}
                             <th>Client</th>
@@ -76,7 +75,6 @@
                             data: {'username': '{{ user.username}}', 'group': '{{ user.groups.all.0 }}'},
                             dataType: 'json',
                             url: '{% url 'get_forecast_table' %}',
-
                         },
 
 

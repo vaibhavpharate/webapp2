@@ -51,9 +51,14 @@
             </ul>
 {#            {% if user.is_authenticated %}#}
                 {% for group_for in request.user.groups.all %}
-                    {% if group_for.name == 'Admin' %}
+                    {% if group_for.name == 'Client' %}
+
+                        {% if user.logos %}
+                            <img src="media/{{ user.logos }}" alt="">
+                            {% endif %}
                         <a href="{% url 'logout' %}" class="btn btn-small btn-warning">Logout</a>
-                    {% elif group_for.name == 'Client' %}
+
+                    {% else %}
                         <a href="{% url 'logout_client' %}" class="btn btn-small btn-danger">Logout</a>
                     {% endif %}
                 {% endfor %}

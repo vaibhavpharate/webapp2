@@ -13,9 +13,9 @@
     <div class="container-fluid">
         <div class="row mx-0 justify-content-end">
             <div class="col-10"></div>
-            <div class="col-2 mx-auto p-2 rounded bg-primary text-center">
-                <h5 class="mb-0 text-white">Last Updated</h5>
-                <p class="text-center text-white mb-0" id="updated_date">
+            <div class="col-2 mx-auto p-2 rounded light_te text-center">
+                <h5 class="mb-0">Last Updated</h5>
+                <p class="text-center mb-0" id="updated_date">
                 </p>
             </div>
         </div>
@@ -29,11 +29,11 @@
                                 <h4 class="text-white">Overview Data</h4>
                             </div>
                             <div class="col-6 text-end">
-                                <a href="{% url "overview" %}" class="btn btn-warning">Visit Overview</a>
+                                <a href="{% url "overview" %}" class="btn bg-transparent border text-white btn_custom">Visit Overview</a>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body ">
                         <table class="table striped" id="overview_table">
                             <thead>
                             <tr>
@@ -61,8 +61,8 @@
                             <div class="col-6">
                                 <h4 class="text-white">Cloud Warning Map</h4>
                             </div>
-                            <div class="col-6 text-end">
-                                <a href="{% url "warnings" %}" class="btn btn-warning">Visit Warning</a>
+                            <div class="col-6 text-end py-3">
+                                <a href="{% url "warnings" %}" class="btn bg-transparent border text-white btn_custom">Visit Warning</a>
                             </div>
                         </div>
                     </div>
@@ -80,11 +80,11 @@
                                 <h4 class="text-white">Forecast Warning</h4>
                             </div>
                             <div class="col-6 text-end">
-                                <a href="{% url "forecast_warning" %}" class="btn btn-warning">Visit Forecast Warning</a>
+                                <a href="{% url "forecast_warning" %}" class="btn bg-transparent border text-white btn_custom">Visit Forecast Warning</a>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body ">
                         {% include 'weatherapp/loading.html' %}
                         <div class="figure_div w-100" id="canvas_section1"></div>
                     </div>

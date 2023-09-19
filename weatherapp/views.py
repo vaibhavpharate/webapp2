@@ -694,7 +694,9 @@ def get_homepage_data(request):
         variable = 'ghi'
 
         # df = df.groupby(['timestamp',''])
-        df = df.loc[df['site_name']=="SPP1"]
+        df_sites = pd.read_csv("static/client_site.csv")
+        sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
+        df = df.loc[df['site_name']==sites[0]]
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
             x=df['timestamp'],
