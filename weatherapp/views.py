@@ -28,6 +28,11 @@ from .models import Clients
 # Clients Form
 from .forms import ClientsForm
 
+
+# Get Decorators
+from .decors import ajax_required
+from django.utils.decorators import method_decorator
+
 User = get_user_model()
 
 
@@ -53,8 +58,8 @@ def get_json_response(df: pd.DataFrame):
 
 
 def forbidden(request):
-    logout(request)
-    messages.warning(request, "You have successfully logged out.")
+    # logout(request)
+    messages.warning(request, "No Access")
     return render(request, template_name='weatherapp/403.html')
 
 
@@ -192,7 +197,12 @@ def get_forecast_data(request):
     pass
 
 
+# @method_decorator(ajax_required)
 def get_forecast_table(request):
+    # if ~is_ajax(request):
+    #     return redirect('403')
+    # else:
+    #     print("Ajax")
     if request.method == 'GET':
         username = request.GET['username']
         user_group = request.GET['group']
@@ -253,7 +263,7 @@ def get_forecast_table(request):
                          'Warning Description', 'temp_forecast', 'temp_actual', 'ghi_forecast',
                          'ghi_actual', 'wind_speed_forecast']
         df_4 = df_4.loc[:, send_list]
-        print(df_4)
+        # print(df_4)
         # print(df_4)
         # data = get_json_response(df_4)
         # print(data)
@@ -302,7 +312,7 @@ def get_min_date(request):
         query = f"SELECT timestamp FROM dashboarding.v_final_dashboarding_view WHERE {variable}_actual IS NOT NULL AND " \
                 f"{variable}_forecast IS NOT NULL AND {variable}_forecast>0 AND {variable}_actual >0 AND site_name = '{site}' ORDER BY timestamp LIMIT 1"
         df = get_sql_data(query)
-        print("Hello There")
+       # print("Hello There")
         date_min = df['timestamp'][0].strftime("%Y-%m-%d")
         return JsonResponse({'data': date_min}, status=200)
 
@@ -337,7 +347,7 @@ def get_fw_data(request):
         ci_index = 0.1
         df = get_sql_data(query)
 
-        print(query)
+        # print(query)
         ## Plotly Graph Fore_Warn
 
         df = df.groupby(['timestamp']).aggregate(
@@ -453,7 +463,7 @@ def get_overview_data(request):
         user_group = request.GET['group']
         user_name = request.GET['username']
         query = ""
-        print(user_group)
+        # print(user_group)
         if user_group == "Client":
             query = f"SELECT * FROM dashboarding.v_client_data_report WHERE client_name = '{user_name}'"
         else:
