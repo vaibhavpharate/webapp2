@@ -142,7 +142,7 @@ def logout_request_client(request):
 def create_client(request):
     form = ClientsForm()
     if request.method == 'POST':
-        form = ClientsForm(request.POST)
+        form = ClientsForm(request.POST, request.FILES)
         if form.is_valid():
             group_data = form.cleaned_data['role_type']
             # print(form.cleaned_data['role_type'])
