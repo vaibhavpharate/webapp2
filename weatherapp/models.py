@@ -19,6 +19,7 @@ class Clients(AbstractUser):
     is_staff = models.BooleanField(default=True)
 
     date_updated = models.DateTimeField(auto_now=True)
+    logos = models.ImageField(upload_to='client_logos/',default="None")
     objects = UserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
