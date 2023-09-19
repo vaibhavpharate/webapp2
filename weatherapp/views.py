@@ -11,6 +11,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import Permission
 
 ## Database Connections
 from django.db import connections
@@ -151,8 +152,13 @@ def create_client(request):
             admin_group = Group.objects.get(name='Admin')
             if group_data == "CLIENT":
                 user.groups.add(client_group)
-            else:
+            elif client_group=="ADMIN":
                 user.groups.add(admin_group)
+                list_perms = ['Can add user','Can change user','Can delete user','Can view user']
+                for x in list_perms:
+                    permission = Permission.objects.get(name=x)
+                    user.user_permissions.add(permission)
+
             messages.success(request, "Client Successfully Added")
             return redirect('create_client')
         else:
@@ -395,7 +401,8 @@ def get_fw_data(request):
                 marker_size=10
             )
         )
-        fig.update_layout(
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
+                           plot_bgcolor='rgba(0,0,0,0)',
             height=500,
             xaxis_title="Timestamp",
             yaxis_title=f"{readings[variable]}",
@@ -430,7 +437,8 @@ def get_fw_data(request):
             marker_color="red"
 
         ))
-        fig2.update_layout(
+        fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)',
+                           plot_bgcolor='rgba(0,0,0,0)',
             height=500/2,
 
             xaxis_title="Timestamp",
@@ -585,7 +593,8 @@ def get_warnings_data(request):
                                 color_continuous_scale=color_list
                                 , mapbox_style='open-street-map')
         fig.update_coloraxes(showscale=False)
-        fig.update_layout(
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
+                           plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
         graphJSON = json.dumps(fig, cls=enc_pltjson)
 
@@ -609,7 +618,8 @@ def get_warnings_data(request):
         fig.update_layout(height=700, title_text="Forecast Cloud Index")
 
         fig2.update_layout(height=700,showlegend=False,)
-        fig2.update_layout(
+        fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)',
+                           plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 30, 'b': 0, 'r': 0})
         graphJSON2 = json.dumps(fig2, cls=enc_pltjson)
 
@@ -678,7 +688,7 @@ def get_homepage_data(request):
                                 , mapbox_style='open-street-map')
         fig.update_coloraxes(showscale=False)
         fig.update_layout(
-            margin={'l': 0, 't': 0, 'b': 0, 'r': 0},showlegend=False )
+            margin={'l': 0, 't': 0, 'b': 0, 'r': 0},showlegend=False,paper_bgcolor='rgb(0,0,0)' )
         graphJSON = json.dumps(fig, cls=enc_pltjson)
 
         variable = 'ghi'
@@ -707,9 +717,12 @@ def get_homepage_data(request):
             )
         )
         fig2.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+
             height=500,
             xaxis_title="Timestamp",
-            yaxis_title="Readings",
+            yaxis_title="GHI (W/m2)",
             # legend_title="Legends",
 
             font=dict(

@@ -3,7 +3,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #fbfbfb;
+            background: transparent;
         }
 
         .wave {
@@ -68,4 +68,29 @@
         }
         .figure_cards .card-header{
             color: #fbfbfb;
+        }
+
+body{
+    background: rgb(238, 238, 238) ;
+}
+
+        .primary{
+            background: #053B50;
+        }
+        .secondary{
+            background: #176B87;
+        }
+        .bright{
+            background: rgb(100, 204, 197);
+        }
+        .light_se
+        {
+            background: rgb(238, 238, 238);
+            /*background: rgb(36, 179, 175);*/
+        }
+        .card-header{
+             background: #176B87 !important;
+        }
+        .light_te{
+            background: rgb(36, 179, 175);
         }
