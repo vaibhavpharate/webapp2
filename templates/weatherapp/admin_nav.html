@@ -53,8 +53,11 @@
                 {% for group_for in request.user.groups.all %}
                     {% if group_for.name == 'Client' %}
 
-                        {% if user.logos %}
-                            <img src="media/{{ user.logos }}" alt="">
+                        {% if user.logos != "None" %}
+                            <span class="btn light_se mx-4">
+                                <img src="/media/{{ user.logos }}" alt="" style="max-height: 50px">
+                            </span>
+
                             {% endif %}
                         <a href="{% url 'logout' %}" class="btn btn-small btn-warning">Logout</a>
 
