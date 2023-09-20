@@ -24,7 +24,7 @@ AUTH_USER_MODEL = 'weatherapp.Clients'
 SECRET_KEY = 'django-insecure-$e9a39+&v83kjvhe_=o4wgd)vd_8t&z89fl2(vg%7ruvx(baj!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["54.81.41.165","localhost",'127.0.0.1']
 
@@ -137,6 +137,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
+    # BASE_DIR / 'static',
     os.path.join(BASE_DIR,'static')
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

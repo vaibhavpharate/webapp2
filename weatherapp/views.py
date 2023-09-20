@@ -302,7 +302,7 @@ def get_forecast_table(request):
                          'Warning Description', 'temp_forecast', 'temp_actual', 'ghi_forecast',
                          'ghi_actual', 'wind_speed_forecast']
         df_4 = df_4.loc[:, send_list]
-
+        # print(df_4)
 
         return JsonResponse({'data': df_4.to_dict('records')}, status=200, safe=False)
 

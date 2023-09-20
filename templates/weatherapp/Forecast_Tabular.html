@@ -12,7 +12,10 @@
         .width-200 {
             width: 200px;
         }
-
+        table.dataTable tbody td {
+            word-break: break-word;
+            vertical-align: top;
+        }
         {##forecast_table_filter{#}
         {#    padding: 10px 0px;#}
 
@@ -101,8 +104,11 @@
                                     if (type === "sort" || type === "type") {
                                         return data;
                                     }
-                                    return "<div class='text-wrap width-200'>" + data + "</div>";
-                                }
+                                    {#return "<div class='text-wrap width-200'>" + data + "</div>";#}
+                                    return data
+                                },
+                                width:'200px'
+
                             },
                             {data: 'Warning Description'},
                             {
@@ -154,7 +160,7 @@
                                             .draw();
                                     });
                                 column.data().unique().sort().each(function (d, j) {
-                                    select.append('<option value="' + d + '">' + d.toString().substring(0, 12) + '</option>')
+                                    select.append('<option value="' + d + '">' + d.toString().substring(0, 100) + '</option>')
                                 });
                             });
                         }
@@ -178,8 +184,7 @@
                             {% endif %}
 
 
-                    ] ||
-                        0; // Our date column in the table
+                    ]  // Our date column in the table
                         {#console.log(moment(createdAt))#}
                         if (
                             (min == "" || max == "") ||
