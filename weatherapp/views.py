@@ -230,34 +230,67 @@ def get_forecast_table(request):
                   10.0: 'Very High very opaque clouds',
                   5.0: 'Very Low clouds'}
         if user_group == "Admin":
-            query = "SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
-                    ",ghi_forecast,wind_speed_actual,wind_speed_forecast,forecast_cloud_type FROM dashboarding.v_final_dashboarding_view WHERE timestamp >= '{time_string}' " \
-                    "ORDER BY timestamp DESC LIMIT 10000"
-            # query =
+           query = "SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
+                   ",ghi_forecast,wind_speed_actual,wind_speed_forecast,forecast_cloud_type FROM dashboarding.v_final_dashboarding_view WHERE timestamp >= '{time_string}' " \
+                   "ORDER BY timestamp DESC LIMIT 10000"
+            # query = f"""SELECT vda.site_name,
+            #             vda.timestamp,
+            #            vda.wind_speed_10m_mps AS wind_speed_forecast,
+            #            vda.wind_direction_in_deg AS wind_direction_forecast,
+            #            vda.temp_c  AS temp_forecast,
+            #            vda.nowcast_ghi_wpm2   AS ghi_forecast,
+            #            vda.ct_flag_data "Cloud Description",,
+            #            vda.ci_data as "forecast_cloud_index",
+            #            vda.forecast_method,
+            #            conf.client_name AS site_client_name,
+            #            sa."ghi(w/m2)" AS ghi_actual,
+            #            sa."temp(c)"   AS temp_actual,
+            #            sa.ws          AS wind_speed_actual,
+            #            sa.wd          AS wind_direction_actual
+            #     FROM forecast.db_api vda
+            #              JOIN configs.site_config conf ON vda.site_name = conf.site_name
+            #              LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name)
+            #                 ORDER BY vda.timestamp desc WHERE timestamp >= '{time_string}'
+            #     LIMIT 30000;"""
         else:
+            # query = f"""SELECT vda.site_name,
+            #             vda.timestamp,
+            #            vda.wind_speed_10m_mps AS wind_speed_forecast,
+            #            vda.wind_direction_in_deg AS wind_direction_forecast,
+            #            vda.temp_c  AS temp_forecast,
+            #            vda.nowcast_ghi_wpm2   AS ghi_forecast,
+            #            vda.ct_flag_data AS "Cloud Description",
+            #            vda.ci_data AS "forecast_cloud_index",
+            #            vda.forecast_method,
+            #            conf.client_name AS site_client_name,
+            #            sa."ghi(w/m2)" AS ghi_actual,
+            #            sa."temp(c)"   AS temp_actual,
+            #            sa.ws          AS wind_speed_actual,
+            #            sa.wd          AS wind_direction_actual
+            #     FROM forecast.db_api vda
+            #              JOIN configs.site_config conf ON vda.site_name = conf.site_name
+            #              LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name)
+            #     WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' ORDER BY vda.timestamp desc
+            #     LIMIT 10000;"""
+
             query = f"SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
-                    ",ghi_forecast,wind_speed_actual,wind_speed_forecast,forecast_cloud_type FROM dashboarding.v_final_dashboarding_view" \
-                    f" WHERE site_client_name = '{username}' AND timestamp >= '{time_string}' ORDER BY timestamp DESC LIMIT 3000 "
+                   ",ghi_forecast,wind_speed_actual,wind_speed_forecast,forecast_cloud_type FROM dashboarding.v_final_dashboarding_view" \
+                   f" WHERE site_client_name = '{username}' AND timestamp >= '{time_string}' ORDER BY timestamp DESC LIMIT 3000 "
 
         df_4 = get_sql_data(query)
-        # print(df_4)
-        # print(df_4.columns)
+
+
         ci_index = 0.1
-        df_4['forecast_cloud_type'] = df_4['forecast_cloud_type'].fillna('No Cloud')
+        df_4['forecast_cloud_type'] = df_4['forecast_cloud_type'].fillna('No Cloud') ## Old Query
         df_4['ghi_actual'] = df_4['ghi_actual'].fillna('None')
-        # print(df_4)
+
+
         df_4['Cloud Description'] = df_4['forecast_cloud_type'].map(lambda x: d_swap[x])
-        # df_4['Warning Category'] = df_4['Cloud Description'].map(
-        #     lambda x: "Cloud Warning" if x == "Very_high_opaque_clouds" else "No Warning")
+
         df_4['Warning Description'] = None
         df_4.loc[df_4['forecast_cloud_index'] > 0.1, "Warning Description"] = "Cloud Warning"
         df_4.loc[df_4['forecast_cloud_index'] <= 0.1, "Warning Description"] = "No Warning"
-        # for x in df_4.loc[:, ['forecast_cloud_index', 'Warning Description']].index:
-        #     if df_4['forecast_cloud_index'][x] > ci_index:
-        #         df_4['Graph Index'][x] = df_$[f'{variable}_forecast'][x]
-        #         # df_4['Warning Description'][x] = "Cloud Warning"
-        #     else:
-        #         # df_4['Warning Description'][x] = "No Warning"
+
         send_list = []
         df_4.fillna("None",inplace=True)
         if user_group == "Admin":
@@ -269,12 +302,8 @@ def get_forecast_table(request):
                          'Warning Description', 'temp_forecast', 'temp_actual', 'ghi_forecast',
                          'ghi_actual', 'wind_speed_forecast']
         df_4 = df_4.loc[:, send_list]
-        # print(df_4)
-        # print(df_4)
-        # data = get_json_response(df_4)
-        # print(data)
-        # df_4 = df_4.to_json(orient='split', index=False)
-        # print(df_4)
+
+
         return JsonResponse({'data': df_4.to_dict('records')}, status=200, safe=False)
 
 
