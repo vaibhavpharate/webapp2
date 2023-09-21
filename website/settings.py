@@ -100,7 +100,16 @@ DATABASES = {
         'HOST': 'tensordb1.cn6gzof6sqbw.us-east-2.rds.amazonaws.com',
         'PORT': '5432',
 
-    }
+    },
+    'configs': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'USER': 'admin123',
+            'PASSWORD': 'tensor123',
+            'HOST': 'tensordb1.cn6gzof6sqbw.us-east-2.rds.amazonaws.com',
+            'PORT': '5432',
+
+        }
 }
 
 # Password validation
