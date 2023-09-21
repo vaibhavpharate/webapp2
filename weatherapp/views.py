@@ -726,7 +726,7 @@ def get_homepage_data(request):
 
         # df = df.groupby(['timestamp',''])
         # df_sites = pd.read_csv("static/client_site.csv")
-        df_sites = get_site_client(
+        df_sites = get_site_client()
         sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
         df = df.loc[df['site_name']==sites[0]]
         fig2 = go.Figure()
