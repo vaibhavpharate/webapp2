@@ -78,7 +78,7 @@ def get_sql_data(query):
         # print(df)
         cursor.close()
         return df
-def get_site_clients():
+def get_site_client():
     df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc")
     return df
 
