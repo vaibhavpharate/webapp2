@@ -78,7 +78,9 @@ def get_sql_data(query):
         # print(df)
         cursor.close()
         return df
-
+def get_site_clients():
+    df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc")
+    return df
 
 def convert_data_to_json(df: pd.DataFrame):
     json_records = df.reset_index().to_json(orient='records')
@@ -723,7 +725,8 @@ def get_homepage_data(request):
         variable = 'ghi'
 
         # df = df.groupby(['timestamp',''])
-        df_sites = pd.read_csv("static/client_site.csv")
+        # df_sites = pd.read_csv("static/client_site.csv")
+        df_sites = get_site_client(
         sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
         df = df.loc[df['site_name']==sites[0]]
         fig2 = go.Figure()
