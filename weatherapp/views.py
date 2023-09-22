@@ -383,7 +383,7 @@ def get_fw_data(request):
             sa."temp(c)" AS temp_actual, sa.ws AS wind_speed_actual, sa.wd AS wind_direction_actual 
             FROM forecast.db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
-            WHERE conf.client_name = '{username}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{start_date}' AND vda.timestamp <= '{end_date}'
+            WHERE conf.site_name = '{site_name}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{start_date}' AND vda.timestamp <= '{end_date}'
               ORDER BY timestamp DESC"""
         ci_index = 0.1
         df = get_sql_data(query)
@@ -552,6 +552,7 @@ def get_overview_data(request):
         else:
             send_list = ['site_name', 'site_status', 'state', 'capacity', 'timestamp_forecast',
                          'timestamp_actual', 'days_till']
+        df_c.fillna("Not Available",inplace=True)
         df_c = df_c.loc[:, send_list]
         df_c['capacity'] = df_c['capacity'].fillna("None")
         return JsonResponse({'data': df_c.to_dict('records')}, status=200, safe=False)
