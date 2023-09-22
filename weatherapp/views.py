@@ -539,13 +539,18 @@ def get_overview_data(request):
         # df_c['max_actual_str'] = df_c['max_actual'].dt.strftime('%d/%m/%Y %H:%M:%S')
 
         df_c['today'] = pd.to_datetime(datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
-        ser = df_c['today'] - df_c['timestamp_actual']
-        df_c['days_till'] = ser.dt.days
+        # print(df_c)
+        # ser = df_c['today'] - df_c['timestamp_actual']
+        df_c['days_till'] = df_c['timestamp_actual'].map(lambda x: datetime.today() -x  if pd.notna(x) else None)
+        df_c['days_till'] = df_c['days_till'].map(lambda x: x.days  if pd.notna(x) else None)
+        # df_c['days_till'] = df_c['total_diff'].dt.days
+        # df_c['days_till'] = ser.dt.days
+
         # df_c = df_c.groupby(['site_name', 'client_name', 'site_status', 'state']).aggregate(
         #     {'capacity': 'mean', 'max_date_wrf': 'max', 'max_actual': 'max', 'days_till': 'sum'})
         # df_c = df_c.reset_index()
         df_c['timestamp_forecast'] = df_c['timestamp_forecast'].dt.strftime('%d/%m/%Y %H:%M:%S')
-        df_c['timestamp_actual'] = df_c['timestamp_actual'].dt.strftime('%d/%m/%Y %H:%M:%S')
+        df_c['timestamp_actual'] = df_c['timestamp_actual'].map(lambda x: datetime.strftime(x,'%d/%m/%Y %H:%M:%S') if pd.notna(x) else None)
         if user_group == "Admin":
             send_list = ['site_name', 'client_name', 'site_status', 'state', 'capacity', 'max_date_wrf',
                          'max_actual', 'days_till']
@@ -553,6 +558,7 @@ def get_overview_data(request):
             send_list = ['site_name', 'site_status', 'state', 'capacity', 'timestamp_forecast',
                          'timestamp_actual', 'days_till']
         df_c.fillna("Not Available",inplace=True)
+
         df_c = df_c.loc[:, send_list]
         df_c['capacity'] = df_c['capacity'].fillna("None")
         return JsonResponse({'data': df_c.to_dict('records')}, status=200, safe=False)
