@@ -8,9 +8,11 @@
                 class="x-el x-el-img c1-1 c1-2 c1-2g c1-2f c1-w c1-u c1-t c1-v c1-2q c1-2r c1-2s c1-2t c1-1d c1-2u c1-2l c1-2m c1-2n c1-2o c1-2v c1-1t c1-b c1-c c1-2w c1-2x c1-13 c1-2y c1-2z c1-30 c1-31 c1-32 c1-33 c1-34 c1-35 c1-36 c1-37 c1-38 c1-d c1-39 c1-3a c1-3b c1-e c1-f c1-g"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"> -->
-        <img src="{% static 'skycaster.png' %}" alt="skycaster" style="width: 8%">
-       <!-- <span class="navbar-toggler-icon"></span> -->
-        </button>
+       <!-- <span class="navbar-toggler-icon"></span> 
+	</button>-->
+	<a href= "{% url 'homepage'%}" class="navbar-brand" style="width:10%">
+		<img src = "{% static 'skycaster.png'  %}" style="width:100%"  />
+	</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
@@ -25,28 +27,27 @@
 
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}"
-                       aria-current="page" href="{% url 'homepage' %}">Homepage</a>
+                   <!-- <a class="nav-link {% if request.resolver_match.url_name == 'homepage' %}active{% endif %}"
+			   aria-current="page" href="{% url 'homepage' %}">Homepage</a> -->
                     {#                    {{ request.resolver_match.url_name }}#}
                 </li>
                 <li class="nav-item">
                     <a class="nav-link
-{% if request.resolver_match.url_name == 'forecast_tabular' %}active{% endif %}" href="{% url 'forecast_tabular' %}">Forecast
-                        Tabular</a>
+{% if request.resolver_match.url_name == 'forecast_tabular' %}active{% endif %}" href="{% url 'forecast_tabular' %}">Data</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link
 {% if request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'overview' %}">Overview
-                        Dashboard</a>
+                        </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link
 {% if request.resolver_match.url_name == 'forecast_warning' %}active{% endif %}" href="{% url 'forecast_warning' %}">Forecast
-                        and Warnings</a>
+                        </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link
-{% if request.resolver_match.url_name == 'warnings' %}active{% endif %}" href="{% url 'warnings' %}">Warnings</a>
+{% if request.resolver_match.url_name == 'warnings' %}active{% endif %}" href="{% url 'warnings' %}">Cloud Warning</a>
                 </li>
             </ul>
 {#            {% if user.is_authenticated %}#}

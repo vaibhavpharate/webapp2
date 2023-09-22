@@ -50,10 +50,6 @@ def get_connection():
     connection1 = connections['dashboarding'].cursor()
     return connection1
 
-def get_custom_connection(schema:str):
-    connection1 = connections[schema].cursor()
-    return connection1
-
 
 # get the json response through Pandas dataframe
 def get_json_response(df: pd.DataFrame):
@@ -82,10 +78,8 @@ def get_sql_data(query):
         # print(df)
         cursor.close()
         return df
-
 def get_site_client():
-    db_connect = get_custom_connection('configs')
-    df = get_sql_data("select sc.site_name , sc.client_name  from configs.site_config sc;" )
+    df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc")
     return df
 
 def convert_data_to_json(df: pd.DataFrame):
@@ -327,7 +321,7 @@ def get_sites(request):
     if request.method == "GET":
         username = request.GET['username']
         group = request.GET['group']
-        df = pd.read_csv("static/client_site.csv")
+        df = get_site_client()
         sites = ""
         if group == "Admin":
             sites = pd.DataFrame(df['site_name'])
@@ -731,9 +725,9 @@ def get_homepage_data(request):
         variable = 'ghi'
 
         # df = df.groupby(['timestamp',''])
+        # df_sites = pd.read_csv("static/client_site.csv")
         df_sites = get_site_client()
         sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
-        print(sites)
         df = df.loc[df['site_name']==sites[0]]
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
