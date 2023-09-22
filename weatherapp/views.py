@@ -531,7 +531,7 @@ def get_overview_data(request):
         df_c = pd.merge(df_act_fct,df_config,on=['site_name'])
         # df_c['Client Name'] = df_c['client_name'].map(lambda x: if x = )
         df_c['client_name'] = df_c['client_name'].fillna('In-House Development')
-
+        # this is an important Line BRO
         # df_c['max_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'max_date']
         # df_c['min_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'min_date']
         # df_c['max_actual'] = df_c.loc[df_c['source'] == 'Actual', 'max_date']
