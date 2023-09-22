@@ -32,7 +32,7 @@
         <div class="table_div div_before_table">
             <div class="col-11 mx-auto">
                 <table class="table table-striped" id="overview">
-                    <thead class="secondary text-white fixed">
+                    <thead class="fixed secondary text-white">
                     <tr>
                         <th>Site Name</th>
                         {% if user.groups.all.0.name == 'Admin' %}
@@ -80,8 +80,8 @@
                     {data: 'state'},
                     {data: 'site_status'},
                     {data: 'capacity'},
-                    {data: 'max_date_wrf'},
-                    {data: 'max_actual'},
+                    {data: 'timestamp_forecast'},
+                    {data: 'timestamp_actual'},
                     {data: 'days_till'}
                 ],
 

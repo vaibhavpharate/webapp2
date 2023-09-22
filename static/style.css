@@ -78,7 +78,7 @@ body{
             background: #053B50;
         }
         .secondary{
-            background: #176B87;
+            background: #176B87 !important;
         }
         .bright{
             background: rgb(100, 204, 197);

@@ -151,11 +151,13 @@
                     {data: 'site_status'},
                     {data: 'state'},
                     {
-                        data: 'max_date_wrf', render: function (data, type, row) {
+                        data: 'timestamp_forecast', render: function (data, type, row) {
                             if (type === "sort" || type === "type") {
                                 return data;
                             }
-                            return moment(data).format("MMMM Do YYYY, h:mm a");
+                            {#console.log(moment(data,'DD/MM/YYYY, h:mm a').format("MMMM Do YYYY, h:mm a"))#}
+                            return moment(data,'DD/MM/YYYY, h:mm').format("MMMM Do YYYY, h:mm a");
+                            {#return data#}
                         }
                     },
 

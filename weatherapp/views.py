@@ -78,9 +78,13 @@ def get_sql_data(query):
         # print(df)
         cursor.close()
         return df
-def get_site_client():
-    df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc")
-    return df
+def get_site_client(client_name = None):
+    if client_name==None:
+        df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc")
+        return df
+    else:
+        df = get_sql_data(f"select sc.site_name,sc.client_name from configs.site_config sc where client_name= '{client_name}'")
+        return df
 
 def convert_data_to_json(df: pd.DataFrame):
     json_records = df.reset_index().to_json(orient='records')
@@ -504,46 +508,52 @@ def get_overview_data(request):
         query = ""
         # print(user_group)
         if user_group == "Client":
-            query = f"SELECT * FROM dashboarding.v_client_data_report WHERE client_name = '{user_name}'"
+            sites_df = get_site_client(user_name)
+            sites_tuple = tuple(sites_df['site_name'])
+            df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.site_actual 
+                where site_name in {sites_tuple} group by site_name order by timestamp_actual desc""")
+            df_fcst = get_sql_data(f"""SELECT max(timestamp) timestamp_forecast,site_name from forecast.db_api where 
+                site_name in {sites_tuple} group by site_name order by timestamp_forecast desc""")
+            df_config = get_sql_data(f"""select site_name,client_name,state,capacity,site_status from 
+            configs.site_config where site_name in {sites_tuple}""")
+
+            # query = f"SELECT * FROM dashboarding.v_client_data_report WHERE client_name = '{user_name}'"
+            # df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.  site_actual group by site_name order by timestamp_actual desc""")
         else:
-            query = f"SELECT * FROM dashboarding.v_client_data_report"
-        df_c = get_sql_data(query)
+            df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.site_actual 
+                             group by site_name order by timestamp_actual desc""")
+            df_fcst = get_sql_data(f"""SELECT max(timestamp) timestamp_forecast,site_name from forecast.db_api 
+            group by site_name order by timestamp_forecast desc""")
+            df_config = get_sql_data(f"""select site_name,client_name,state,capacity,site_status from 
+                        configs.site_config""")
+        # df_c = get_sql_data(query)
+        df_act_fct = pd.merge(df_act, df_fcst, how='outer', on=['site_name'])
+        df_c = pd.merge(df_act_fct,df_config,on=['site_name'])
         # df_c['Client Name'] = df_c['client_name'].map(lambda x: if x = )
         df_c['client_name'] = df_c['client_name'].fillna('In-House Development')
-        df_c['max_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'max_date']
-        df_c['min_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'min_date']
-        df_c['max_actual'] = df_c.loc[df_c['source'] == 'Actual', 'max_date']
+
+        # df_c['max_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'max_date']
+        # df_c['min_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'min_date']
+        # df_c['max_actual'] = df_c.loc[df_c['source'] == 'Actual', 'max_date']
         # df_c['max_date_wrf_str'] = df_c['max_date_wrf'].dt.strftime('%d/%m/%Y %H:%M:%S')
         # df_c['max_actual_str'] = df_c['max_actual'].dt.strftime('%d/%m/%Y %H:%M:%S')
 
         df_c['today'] = pd.to_datetime(datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
-        ser = df_c['today'] - df_c['max_actual']
+        ser = df_c['today'] - df_c['timestamp_actual']
         df_c['days_till'] = ser.dt.days
-        df_c = df_c.groupby(['site_name', 'client_name', 'site_status', 'state']).aggregate(
-            {'capacity': 'mean', 'max_date_wrf': 'max', 'max_actual': 'max', 'days_till': 'sum'})
-        df_c = df_c.reset_index()
-        df_c['max_date_wrf_str'] = df_c['max_date_wrf'].dt.strftime('%d/%m/%Y %H:%M:%S')
-        df_c['max_actual_str'] = df_c['max_actual'].dt.strftime('%d/%m/%Y %H:%M:%S')
+        # df_c = df_c.groupby(['site_name', 'client_name', 'site_status', 'state']).aggregate(
+        #     {'capacity': 'mean', 'max_date_wrf': 'max', 'max_actual': 'max', 'days_till': 'sum'})
+        # df_c = df_c.reset_index()
+        df_c['timestamp_forecast'] = df_c['timestamp_forecast'].dt.strftime('%d/%m/%Y %H:%M:%S')
+        df_c['timestamp_actual'] = df_c['timestamp_actual'].dt.strftime('%d/%m/%Y %H:%M:%S')
         if user_group == "Admin":
             send_list = ['site_name', 'client_name', 'site_status', 'state', 'capacity', 'max_date_wrf',
                          'max_actual', 'days_till']
         else:
-            send_list = ['site_name', 'site_status', 'state', 'capacity', 'max_date_wrf',
-                         'max_actual', 'days_till']
+            send_list = ['site_name', 'site_status', 'state', 'capacity', 'timestamp_forecast',
+                         'timestamp_actual', 'days_till']
         df_c = df_c.loc[:, send_list]
         df_c['capacity'] = df_c['capacity'].fillna("None")
-
-
-        # print(df_c)
-        # results = get_json_response(df_c)
-        # clients = get_json_response(pd.DataFrame(df_c['client_name'].unique(), columns=["clients"]))
-        # states = get_json_response(pd.DataFrame(df_c['state'].unique(), columns=["states"]))
-        # state =
-        # results = ""
-        # print(df_c['max_date_wrf_str'])
-        # print(clients)
-        # context = {'results': results, 'clients': clients, 'states': states}
-        # print(len(df_c))
         return JsonResponse({'data': df_c.to_dict('records')}, status=200, safe=False)
 
 
