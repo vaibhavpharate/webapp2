@@ -22,7 +22,7 @@
 
             {% endif %}
             <div class="col-3">
-                <div class="forms">
+               <div class="forms d-none">
                     <label for="set_index" class="form-label">Select Cloud Index</label>
                     <div class="container-fluid">
                         <div class="row">
@@ -133,14 +133,14 @@
                 })
             }
 
-            $('#set_index').unbind('change').change(function () {
-                $('.canvas_section1').hide();
-                let vl = Number($(this).val())/10;
-                $('#range_span').html(vl)
+           // $('#set_index').unbind('change').change(function () {
+            //    $('.canvas_section1').hide();
+              //  let vl = Number($(this).val())/10;
+                //$('#range_span').html(vl)
                 {#console.log($(this).val())#}
 
-                get_map_data();
-            });
+               // get_map_data();
+            //});
             {% if user.groups.all.0.name == "Admin" %}
             $('#select_client').unbind('change').change(function () {
                 {#console.log($(this).val())#}
