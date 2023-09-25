@@ -94,3 +94,10 @@ body{
         .light_te{
             background: rgb(36, 179, 175);
         }
+
+        .logout_btn{
+            border-radius: 50%;
+        }
+        .logout_btn:hover{
+            opacity: 0.7;
+        }

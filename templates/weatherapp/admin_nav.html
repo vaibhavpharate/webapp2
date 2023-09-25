@@ -60,10 +60,12 @@
                             </span>
 
                             {% endif %}
-                        <a href="{% url 'logout_client' %}" class="btn btn-small btn-warning">Logout</a>
+                        <a href="{% url 'logout_client' %}" class="btn btn-small light_se logout_btn "><i class="fa fa-power-off" aria-hidden="true"></i>
+</a>
 
                     {% else %}
-                        <a href="{% url 'logout' %}" class="btn btn-small btn-danger">Logout</a>
+                        <a href="{% url 'logout' %}" class="btn text-white  light_se btn-small logout_btn"><i class="fa fa-power-off" aria-hidden="true"></i>
+</a>
                     {% endif %}
                 {% endfor %}
 
