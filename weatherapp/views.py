@@ -274,7 +274,7 @@ def get_forecast_table(request):
                        sa."temp(c)"   AS temp_actual,
                        sa.ws          AS wind_speed_actual,
                        sa.wd          AS wind_direction_actual
-                FROM forecast.db_api vda
+                FROM forecast.v_db_api vda
                          JOIN configs.site_config conf ON vda.site_name = conf.site_name
                          LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name)
                 WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' AND vda.forecast_method = 'exim' ORDER BY vda.timestamp desc
@@ -285,6 +285,7 @@ def get_forecast_table(request):
             #        f" WHERE site_client_name = '{username}' AND timestamp >= '{time_string}' ORDER BY timestamp DESC LIMIT 3000 "
 
         df_4 = get_sql_data(query)
+        print(query)
 
 
         ci_index = 0.1
