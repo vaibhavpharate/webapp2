@@ -60,8 +60,11 @@
                             </span>
 
                             {% endif %}
+                        <div>
                         <a href="{% url 'logout_client' %}" class="btn btn-small light_se logout_btn "><i class="fa fa-power-off" aria-hidden="true"></i>
-</a>
+                        </a>
+                        <span class="text-white d-block text-center" style="font-size: 0.7rem">Logout</span>
+                        </div>
 
                     {% else %}
                         <a href="{% url 'logout' %}" class="btn text-white  light_se btn-small logout_btn"><i class="fa fa-power-off" aria-hidden="true"></i>
