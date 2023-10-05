@@ -438,6 +438,7 @@ def get_fw_data(request):
                 marker_size=10
             )
         )
+        fig.update_yaxes(showgrid=True, gridwidth=0.4, gridcolor='LightGrey')
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                            plot_bgcolor='rgba(0,0,0,0)',
             height=500,
@@ -474,6 +475,7 @@ def get_fw_data(request):
             marker_color="red"
 
         ))
+        fig2.update_yaxes(showgrid=True, gridwidth=0.4, gridcolor='LightGrey')
         fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                            plot_bgcolor='rgba(0,0,0,0)',
             height=500/2,
@@ -682,7 +684,8 @@ def get_homepage_data(request):
     if request.method == "GET":
         group = request.GET['group']
         client = request.GET['username']
-        yesterday = datetime.now()
+        site_name = request.GET['site_name']
+        yesterday = datetime.now().date()
         time_string = datetime.strftime(yesterday, '%m-%d-%y %H:%M:%S')
         if group == "Admin":
             query = ""
@@ -699,7 +702,7 @@ def get_homepage_data(request):
             FROM forecast.db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
             WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}'
-              ORDER BY timestamp DESC"""
+            AND vda.site_name='{site_name}'  ORDER BY timestamp DESC"""
         ci_index = 0.1
         df = get_sql_data(query)
 
@@ -742,12 +745,12 @@ def get_homepage_data(request):
         graphJSON = json.dumps(fig, cls=enc_pltjson)
 
         variable = 'ghi'
-
+        # print(df)
         # df = df.groupby(['timestamp',''])
         # df_sites = pd.read_csv("static/client_site.csv")
         df_sites = get_site_client()
         sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
-        df = df.loc[df['site_name']==sites[0]]
+        # df = df.loc[df['site_name']==sites[0]]
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
             x=df['timestamp'],
@@ -769,6 +772,7 @@ def get_homepage_data(request):
                 marker_size=10
             )
         )
+        fig2.update_yaxes(showgrid=True, gridwidth=0.4, gridcolor='LightGrey')
         fig2.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
@@ -792,20 +796,98 @@ def get_homepage_data(request):
         )
         graphJSON2 = json.dumps(fig2, cls=enc_pltjson)
         return JsonResponse({'maps_data': graphJSON,'graphs_data':graphJSON2}, status=200, safe=False)
-        # if is_ajax(request):
-        #     username = request.GET['username']
-        #     group = request.GET['group']
-        #
-        #     # This is the bog One
-        #     # The Table 1 Data
-        #     return JsonResponse({'data':"Hello World"},status=200,safe=False)
-        # else:
-        #     return redirect('403')
-# @login_required('client_login')
-# def user_update(request,id:int):
-#     user_details = Clients.objects.get(id=id)
-#     if len(user_details.username)<0:
-#         return redirect('homepage')
-#     else:
-#         form = ClientsForm(data=user_details)
-#         return render(request,template_name='weatherapp/update_user.html',context={'form':form})
+
+
+
+def update_on_site_change(request):
+    if request.method == "GET":
+        group = request.GET['group']
+        client = request.GET['username']
+        site_name = request.GET['site_name']
+        yesterday = datetime.now().date()
+        variable = 'ghi'
+        time_string = datetime.strftime(yesterday, '%m-%d-%y %H:%M:%S')
+        if group == "Admin":
+            query = ""
+        else:
+            query = f"""SELECT vda.site_name, vda.timestamp, vda.wind_speed_10m_mps AS wind_speed_forecast, 
+            vda.wind_direction_in_deg AS wind_direction_forecast, vda.temp_c AS wind_direction_forecast, 
+            vda.nowcast_ghi_wpm2 AS ghi_forecast, vda.swdown2,vda.ci_data AS forecast_cloud_index, vda.tz, vda.ct_data, vda.ct_flag_data, 
+            vda.forecast_method, vda.log_ts, conf.client_name, conf.latitude AS site_lat,
+            conf.longitude AS site_lon, sa."ghi(w/m2)" AS ghi_actual, 
+            sa."temp(c)" AS temp_actual, sa.ws AS wind_speed_actual, sa.wd AS wind_direction_actual 
+            FROM forecast.db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
+            LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
+            WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}'
+            AND vda.site_name='{site_name}'  ORDER BY timestamp DESC"""
+        ci_index = 0.1
+        df = get_sql_data(query)
+
+        df = df.groupby(['timestamp', 'site_name', 'client_name']).aggregate(
+            {'ghi_forecast': 'mean', 'ghi_actual': 'mean', 'forecast_cloud_index': 'mean', 'site_lat': 'mean',
+             'site_lon': 'mean'}).reset_index()
+
+        df['C_I_R'] = df['forecast_cloud_index'] * 100
+        df['Warning Description'] = None
+        df['Warning Category'] = None
+        df['Graph Index'] = None
+        df.loc[df['forecast_cloud_index'] > 0.1, "Warning Category"] = "Red"
+        df.loc[df['forecast_cloud_index'] <= 0.1, "Warning Category"] = "Green"
+        df.loc[df['forecast_cloud_index'] > 0.1, "Warning Description"] = "Cloud Warning"
+        df.loc[df['forecast_cloud_index'] <= 0.1, "Warning Description"] = "No Warning"
+
+        for x in df.loc[:, 'forecast_cloud_index'].index:
+            if df['forecast_cloud_index'][x] > ci_index:
+                df['Graph Index'][x] = df[f'ghi_forecast'][x]
+
+        # fn1 = df.groupby(['site_name', 'timestamp', 'Warning Description', 'Warning Category']).aggregate(
+        #     {'site_lat': 'mean', 'site_lon': 'mean', 'forecast_cloud_index': 'mean', 'C_I_R': 'mean'}).reset_index()
+        color_list = ['lightgreen', 'green', 'red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
+        fig2 = go.Figure()
+        fig2.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df[f'{variable}_actual'],
+            name=f"{variable.title()} Actual"
+        ))
+        fig2.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df[f'{variable}_forecast'],
+            name=f"{variable.title()} Forecast"
+        ))
+        fig2.add_trace(
+            go.Scatter(
+                x=df['timestamp'],
+                y=df['Graph Index'],
+                name='Cloud Warning',
+                mode='markers',
+                marker_color='orange',
+                marker_size=10
+            )
+        )
+        fig2.update_yaxes(showgrid=True, gridwidth=0.4, gridcolor='LightGrey')
+        fig2.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+
+            height=500,
+            xaxis_title="Timestamp",
+            yaxis_title="GHI (W/m2)",
+            # legend_title="Legends",
+
+            font=dict(
+                family="Arial",
+                size=15,
+            ),
+            margin=dict(
+                l=10,
+                r=10,
+                b=10,
+                t=10,
+                pad=1
+            ),
+        )
+        graphJSON2 = json.dumps(fig2, cls=enc_pltjson)
+        return JsonResponse({'graphs_data': graphJSON2}, status=200, safe=False)
+
+
+

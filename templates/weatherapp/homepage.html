@@ -85,6 +85,10 @@
                         </div>
                     </div>
                     <div class="card-body ">
+                        <div class="col-2">
+                            <label for="select_site">Select Site</label>
+                            <select name="select_site" id="select_site" class="form-select"> </select>
+                        </div>
                         {% include 'weatherapp/loading.html' %}
                         <div class="figure_div w-100" id="canvas_section1"></div>
                     </div>
@@ -95,6 +99,27 @@
     </div>
     <script>
         $(document).ready(function () {
+            $.ajax({
+                url: "{% url 'get_sites' %}",
+                    dataType: 'json',
+                    async: false,
+
+                    data: {'username': '{{ user.username }}', 'group': '{{ user.groups.all.0 }}'},
+                    success: function (data) {
+                        {#console.log(data)#}
+                        let sites = data.data;
+                        let counter = 1;
+                        for (s in sites) $('#select_site').append(
+                            "<option value='" + sites[s].site_name + "'" + (sites[s].site_name ===
+                            'Hisar' ? "selected" : "") + " >" + sites[s].site_name + "</option>"
+                        );
+                    }
+            })
+
+            let site_selected = $('#select_site').val()
+
+
+
             let updated = new Date();
             updated = moment(updated).format("MMMM Do YYYY, h:mm a")
             $('#updated_date').html(updated);
@@ -103,9 +128,10 @@
 
             function main_call() {
 
+
                 $.ajax({
                     dataType: 'json',
-                    data: {'username': '{{user.username}}', 'group': '{{user.groups.all.0.name}}'},
+                    data: {'username': '{{user.username}}', 'group': '{{user.groups.all.0.name}}','site_name':site_selected},
 
                     url: "{% url 'get_homepage_data' %}",
                     success: function (data) {
@@ -166,6 +192,27 @@
 
 
             });
+            $('#select_site').unbind('change').change(function(){
+                $('#canvas_section1').hide()
+                $('.center').show()
+
+                site_selected = $(this).val()
+                {#console.log(site_selected)#}
+                $.ajax({
+                    url:{% url 'get_homepage_graph_data' %},
+                    dataType:'json',
+                    data: {'username': '{{user.username}}', 'group': '{{user.groups.all.0.name}}','site_name':site_selected},
+
+                    success: function (data) {
+                        $('.center').hide()
+                        $('#canvas_section1').show()
+                        var graphs = JSON.parse(data.graphs_data);
+                        Plotly.newPlot("canvas_section1", graphs, {});
+
+                    }
+                })
+
+            })
 
         })
     </script>

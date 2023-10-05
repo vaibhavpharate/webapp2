@@ -32,6 +32,7 @@ urlpatterns = [
     path('get_overview_data/', get_overview_data, name='get_overview_data'),
     path('get_client/', get_clients, name='get_clients'),
     path('get_warnings_data/', get_warnings_data, name='get_warnings_data'),
-    path('get_homepage_data/', get_homepage_data, name='get_homepage_data')
+    path('get_homepage_data/', get_homepage_data, name='get_homepage_data'),
+    path('get_homepage_graph_data/',update_on_site_change,name='get_homepage_graph_data')
 
 ]
