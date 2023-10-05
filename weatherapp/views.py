@@ -274,10 +274,10 @@ def get_forecast_table(request):
                        sa."temp(c)"   AS temp_actual,
                        sa.ws          AS wind_speed_actual,
                        sa.wd          AS wind_direction_actual
-                FROM forecast.db_api vda
+                FROM forecast.v_db_api vda
                          JOIN configs.site_config conf ON vda.site_name = conf.site_name
                          LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name)
-                WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' ORDER BY vda.timestamp desc
+                WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' AND vda.forecast_method = 'exim' ORDER BY vda.timestamp desc
                 LIMIT 10000;"""
 
             # query = f"SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
@@ -285,6 +285,7 @@ def get_forecast_table(request):
             #        f" WHERE site_client_name = '{username}' AND timestamp >= '{time_string}' ORDER BY timestamp DESC LIMIT 3000 "
 
         df_4 = get_sql_data(query)
+        print(query)
 
 
         ci_index = 0.1
@@ -383,10 +384,10 @@ def get_fw_data(request):
             vda.forecast_method, vda.log_ts, conf.client_name, conf.latitude AS site_lat,
             conf.longitude AS site_lon, sa."ghi(w/m2)" AS ghi_actual, 
             sa."temp(c)" AS temp_actual, sa.ws AS wind_speed_actual, sa.wd AS wind_direction_actual 
-            FROM forecast.db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
+            FROM forecast.v_db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
-            WHERE conf.site_name = '{site_name}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{start_date}' AND vda.timestamp <= '{end_date}'
-              ORDER BY timestamp DESC"""
+            WHERE conf.site_name = '{site_name}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{start_date}' AND vda.timestamp <= '{end_date}' AND vda.forecast_method = 'exim'
+            and vda.forecast_method='exim'  ORDER BY timestamp DESC"""
         ci_index = 0.1
         df = get_sql_data(query)
 
@@ -516,7 +517,7 @@ def get_overview_data(request):
             sites_tuple = tuple(sites_df['site_name'])
             df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.site_actual 
                 where site_name in {sites_tuple} group by site_name order by timestamp_actual desc""")
-            df_fcst = get_sql_data(f"""SELECT max(timestamp) timestamp_forecast,site_name from forecast.db_api where 
+            df_fcst = get_sql_data(f"""SELECT max(timestamp) timestamp_forecast,site_name from forecast.v_db_api where 
                 site_name in {sites_tuple} group by site_name order by timestamp_forecast desc""")
             df_config = get_sql_data(f"""select site_name,client_name,state,capacity,site_status from 
             configs.site_config where site_name in {sites_tuple}""")
@@ -526,7 +527,7 @@ def get_overview_data(request):
         else:
             df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.site_actual 
                              group by site_name order by timestamp_actual desc""")
-            df_fcst = get_sql_data(f"""SELECT max(timestamp) timestamp_forecast,site_name from forecast.db_api 
+            df_fcst = get_sql_data(f"""SELECT max(timestamp) timestamp_forecast,site_name from forecast.v_db_api 
             group by site_name order by timestamp_forecast desc""")
             df_config = get_sql_data(f"""select site_name,client_name,state,capacity,site_status from 
                         configs.site_config""")
@@ -603,7 +604,7 @@ def get_warnings_data(request):
         #         f" timestamp > '{time_string}' ORDER BY timestamp DESC LIMIT 1000"
         query = f"""SELECT vda.site_name, vda.timestamp, vda.ci_data AS forecast_cloud_index, vda.tz, vda.ct_data, vda.ct_flag_data, 
             vda.forecast_method, vda.log_ts, conf.client_name, conf.latitude AS site_lat,
-            conf.longitude AS site_lon FROM forecast.db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
+            conf.longitude AS site_lon FROM forecast.v_db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
             WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}'
               ORDER BY timestamp DESC"""
@@ -699,7 +700,7 @@ def get_homepage_data(request):
             vda.forecast_method, vda.log_ts, conf.client_name, conf.latitude AS site_lat,
             conf.longitude AS site_lon, sa."ghi(w/m2)" AS ghi_actual, 
             sa."temp(c)" AS temp_actual, sa.ws AS wind_speed_actual, sa.wd AS wind_direction_actual 
-            FROM forecast.db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
+            FROM forecast.v_db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
             WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}'
             AND vda.site_name='{site_name}'  ORDER BY timestamp DESC"""
