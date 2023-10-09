@@ -42,8 +42,8 @@
                                     <th>Client Name</th>
                                 {% endif %}
                                 <th>Site Name</th>
-                                <th>State</th>
                                 <th>Site Status</th>
+                                <th>State</th>
                                 <th>Forecast Updated Till</th>
                             </tr>
                             </thead>
@@ -194,7 +194,7 @@
             });
             $('#select_site').unbind('change').change(function(){
                 $('#canvas_section1').hide()
-                $('.center').show()
+                $('.center:last-child').show()
 
                 site_selected = $(this).val()
                 {#console.log(site_selected)#}
@@ -204,7 +204,7 @@
                     data: {'username': '{{user.username}}', 'group': '{{user.groups.all.0.name}}','site_name':site_selected},
 
                     success: function (data) {
-                        $('.center').hide()
+                        $('.center:last-child').hide()
                         $('#canvas_section1').show()
                         var graphs = JSON.parse(data.graphs_data);
                         Plotly.newPlot("canvas_section1", graphs, {});

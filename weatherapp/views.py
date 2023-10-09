@@ -80,10 +80,10 @@ def get_sql_data(query):
         return df
 def get_site_client(client_name = None):
     if client_name==None:
-        df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc")
+        df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc WHERE sc.type='Solar'")
         return df
     else:
-        df = get_sql_data(f"select sc.site_name,sc.client_name from configs.site_config sc where client_name= '{client_name}'")
+        df = get_sql_data(f"select sc.site_name,sc.client_name from configs.site_config sc where client_name= '{client_name}' AND sc.type='Solar'")
         return df
 
 def convert_data_to_json(df: pd.DataFrame):
@@ -273,19 +273,20 @@ def get_forecast_table(request):
                        sa."ghi(w/m2)" AS ghi_actual,
                        sa."temp(c)"   AS temp_actual,
                        sa.ws          AS wind_speed_actual,
-                       sa.wd          AS wind_direction_actual
+                       sa.wd          AS wind_direction_actual,
+                       conf.type
                 FROM forecast.v_db_api vda
                          JOIN configs.site_config conf ON vda.site_name = conf.site_name
                          LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name)
-                WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' AND vda.forecast_method = 'exim' ORDER BY vda.timestamp desc
-                LIMIT 10000;"""
+                WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' AND vda.forecast_method = 'exim'
+                AND conf.type='Solar'  ORDER BY vda.timestamp desc LIMIT 10000;"""
 
             # query = f"SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
             #        ",ghi_forecast,wind_speed_actual,wind_speed_forecast,forecast_cloud_type FROM dashboarding.v_final_dashboarding_view" \
             #        f" WHERE site_client_name = '{username}' AND timestamp >= '{time_string}' ORDER BY timestamp DESC LIMIT 3000 "
 
         df_4 = get_sql_data(query)
-        print(query)
+        # print(query)
 
 
         ci_index = 0.1
@@ -329,22 +330,22 @@ def get_sites(request):
         username = request.GET['username']
         group = request.GET['group']
         df = get_site_client()
-        sites = ""
+        # sites = ""
         if group == "Admin":
             sites = pd.DataFrame(df['site_name'])
+            sites.sort_values('site_name', ascending=True, inplace=True)
         else:
             sites = pd.DataFrame(df.loc[df['client_name'] == username, 'site_name'])
+            sites.sort_values('site_name', ascending=True , inplace=True)
         return JsonResponse({'data': sites.to_dict('records')}, status=200)
+
 
 
 def get_clients(request):
     if request.method == "GET":
         clients = pd.read_csv("static/client_site.csv")
         clients['client_name'] = clients['client_name'].fillna("None")
-        # print(clients)
         clients = pd.DataFrame(clients['client_name'].unique(), columns=['clients'])
-        # clients = clients['clients'].fillna("None")
-        # print(clients)
         return JsonResponse({'data': clients.to_dict('records')}, status=200, safe=False)
 
 
@@ -356,7 +357,6 @@ def get_min_date(request):
         query = f"SELECT timestamp FROM dashboarding.v_final_dashboarding_view WHERE {variable}_actual IS NOT NULL AND " \
                 f"{variable}_forecast IS NOT NULL AND {variable}_forecast>0 AND {variable}_actual >0 AND site_name = '{site}' ORDER BY timestamp LIMIT 1"
         df = get_sql_data(query)
-       # print("Hello There")
         date_min = df['timestamp'][0].strftime("%Y-%m-%d")
         return JsonResponse({'data': date_min}, status=200)
 
@@ -370,14 +370,13 @@ def get_fw_data(request):
         end_date = request.GET['end_date']
         variable = request.GET['variable']
 
+        # start_date = datetime.strptime(start_date,'%Y-%m-%d')
+        # print(start_date)
         if len(start_date) > 1:
             start_date = start_date + " 00:00:00"
         if len(end_date) > 1:
-            end_date = end_date + " 00:00:00"
-        print(f"Start Date is {start_date}")
-        # query = f"SELECT timestamp,site_name,forecast_cloud_index,{variable}_actual,{variable}_forecast FROM dashboarding.v_final_dashboarding_view WHERE" \
-        #         f" site_name='{site_name}' AND timestamp >='{start_date}'" \
-        #         f"AND timestamp <= '{end_date}' ORDER BY timestamp DESC"
+            end_date = end_date + " 23:59:59"
+
         query = f"""SELECT vda.site_name, vda.timestamp, vda.wind_speed_10m_mps AS wind_speed_forecast, 
             vda.wind_direction_in_deg AS wind_direction_forecast, vda.temp_c AS temp_forecast, 
             vda.nowcast_ghi_wpm2 AS ghi_forecast, vda.swdown2,vda.ci_data AS forecast_cloud_index, vda.tz, vda.ct_data, vda.ct_flag_data, 
@@ -386,13 +385,11 @@ def get_fw_data(request):
             sa."temp(c)" AS temp_actual, sa.ws AS wind_speed_actual, sa.wd AS wind_direction_actual 
             FROM forecast.v_db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
-            WHERE conf.site_name = '{site_name}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{start_date}' AND vda.timestamp <= '{end_date}' AND vda.forecast_method = 'exim'
-            and vda.forecast_method='exim'  ORDER BY timestamp DESC"""
+            WHERE conf.site_name = '{site_name}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{start_date}' AND vda.timestamp <= '{end_date}'  ORDER BY timestamp DESC"""
+        # Forecast method not exim
         ci_index = 0.1
         df = get_sql_data(query)
 
-        # print(query)
-        ## Plotly Graph Fore_Warn
 
         df = df.groupby(['timestamp']).aggregate(
             {f'{variable}_actual': 'mean', f'{variable}_forecast': 'mean',
@@ -412,9 +409,6 @@ def get_fw_data(request):
         for x in df.loc[:, ['forecast_cloud_index', f'{variable}_forecast', 'Warning Description']].index:
             if df['forecast_cloud_index'][x] > ci_index:
                 df['Graph Index'][x] = df[f'{variable}_forecast'][x]
-
-
-
 
         # df.to_csv("forecast_data.csv")
         readings = {'ghi':"W/m2","temp":f"{chr(176)} C",'wind_speed':"m/s"}
@@ -499,8 +493,7 @@ def get_fw_data(request):
 
 
 
-        # print(mn)
-        # plt = px.line(data_frame=df,x='timestamp',y=['ghi_forecast','ghi_actual'])
+
         graphJSON = json.dumps(fig, cls=enc_pltjson)
         graphJson2 = json.dumps(fig2, cls=enc_pltjson)
         return JsonResponse({'data': graphJSON, 'deviation': graphJson2}, status=200)
@@ -510,8 +503,7 @@ def get_overview_data(request):
     if request.method == "GET":
         user_group = request.GET['group']
         user_name = request.GET['username']
-        query = ""
-        # print(user_group)
+
         if user_group == "Client":
             sites_df = get_site_client(user_name)
             sites_tuple = tuple(sites_df['site_name'])
@@ -522,8 +514,7 @@ def get_overview_data(request):
             df_config = get_sql_data(f"""select site_name,client_name,state,capacity,site_status from 
             configs.site_config where site_name in {sites_tuple}""")
 
-            # query = f"SELECT * FROM dashboarding.v_client_data_report WHERE client_name = '{user_name}'"
-            # df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.  site_actual group by site_name order by timestamp_actual desc""")
+
         else:
             df_act = get_sql_data(f"""SELECT max(timestamp) timestamp_actual,site_name from site_actual.site_actual 
                              group by site_name order by timestamp_actual desc""")
@@ -531,29 +522,18 @@ def get_overview_data(request):
             group by site_name order by timestamp_forecast desc""")
             df_config = get_sql_data(f"""select site_name,client_name,state,capacity,site_status from 
                         configs.site_config""")
-        # df_c = get_sql_data(query)
+
         df_act_fct = pd.merge(df_act, df_fcst, how='outer', on=['site_name'])
         df_c = pd.merge(df_act_fct,df_config,on=['site_name'])
-        # df_c['Client Name'] = df_c['client_name'].map(lambda x: if x = )
+
         df_c['client_name'] = df_c['client_name'].fillna('In-House Development')
-        # this is an important Line BRO
-        # df_c['max_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'max_date']
-        # df_c['min_date_wrf'] = df_c.loc[df_c['source'] == 'WRF', 'min_date']
-        # df_c['max_actual'] = df_c.loc[df_c['source'] == 'Actual', 'max_date']
-        # df_c['max_date_wrf_str'] = df_c['max_date_wrf'].dt.strftime('%d/%m/%Y %H:%M:%S')
-        # df_c['max_actual_str'] = df_c['max_actual'].dt.strftime('%d/%m/%Y %H:%M:%S')
+
 
         df_c['today'] = pd.to_datetime(datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
-        # print(df_c)
-        # ser = df_c['today'] - df_c['timestamp_actual']
+
         df_c['days_till'] = df_c['timestamp_actual'].map(lambda x: datetime.today() -x  if pd.notna(x) else None)
         df_c['days_till'] = df_c['days_till'].map(lambda x: x.days  if pd.notna(x) else None)
-        # df_c['days_till'] = df_c['total_diff'].dt.days
-        # df_c['days_till'] = ser.dt.days
 
-        # df_c = df_c.groupby(['site_name', 'client_name', 'site_status', 'state']).aggregate(
-        #     {'capacity': 'mean', 'max_date_wrf': 'max', 'max_actual': 'max', 'days_till': 'sum'})
-        # df_c = df_c.reset_index()
         df_c['timestamp_forecast'] = df_c['timestamp_forecast'].dt.strftime('%d/%m/%Y %H:%M:%S')
         df_c['timestamp_actual'] = df_c['timestamp_actual'].map(lambda x: datetime.strftime(x,'%d/%m/%Y %H:%M:%S') if pd.notna(x) else None)
         if user_group == "Admin":
@@ -595,32 +575,31 @@ def get_warnings_data(request):
         client = request.GET['client']
         ci_index = int(request.GET['index'])
         ci_index = ci_index / 10
-        # print(ci_index)
+
         yesterday = datetime.now()
-        three_plus = datetime.now() + timedelta(hours=3)
+
         time_string = datetime.strftime(yesterday, '%Y-%m-%d %H:%M:%S')
-        # query = "SELECT timestamp,site_lat,site_lon,site_name,forecast_cloud_index FROM " \
-        #         f"dashboarding.v_final_dashboarding_view WHERE site_client_name ='{client}' AND " \
-        #         f" timestamp > '{time_string}' ORDER BY timestamp DESC LIMIT 1000"
+        three_hours = yesterday + timedelta(hours=3)
+        three_hours = datetime.strftime(three_hours, '%Y-%m-%d %H:%M:%S')
+
         query = f"""SELECT vda.site_name, vda.timestamp, vda.ci_data AS forecast_cloud_index, vda.tz, vda.ct_data, vda.ct_flag_data, 
             vda.forecast_method, vda.log_ts, conf.client_name, conf.latitude AS site_lat,
             conf.longitude AS site_lon FROM forecast.v_db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
-            WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}'
+            WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}' AND vda.timestamp < '{three_hours}' 
               ORDER BY timestamp DESC"""
         fnl = get_sql_data(query)
-        # print(query)
-        # print(fnl)
         fnl['Warning Description'] = None
         fnl['Warning Category'] = None
-        fnl.loc[fnl['forecast_cloud_index'] > 0.1, "Warning Category"] = "Red"
+        fnl.loc[
+            (fnl['forecast_cloud_index'] > 0.1) & (fnl['forecast_cloud_index'] <= 0.25), "Warning Category"] = "Orange"
         fnl.loc[fnl['forecast_cloud_index'] <= 0.1, "Warning Category"] = "Green"
+        fnl.loc[fnl['forecast_cloud_index'] > 0.25, "Warning Category"] = "Red"
         fnl.loc[fnl['forecast_cloud_index'] > 0.1, "Warning Description"] = "Cloud Warning"
         fnl.loc[fnl['forecast_cloud_index'] <= 0.1, "Warning Description"] = "No Warning"
-        # print(fnl.head(5))
         sites_list = list(fnl['site_name'].unique())
+        print(sites_list)
         sites_list.sort()
-        # print(sites_list)
         fnl['timestamp'] = pd.to_datetime(fnl.timestamp)
         fnl['timestamp2'] = fnl['timestamp'].dt.strftime('%d %b %Y %H:%M')
         fnl['C_I_R'] = fnl['forecast_cloud_index'] * 100
@@ -630,7 +609,6 @@ def get_warnings_data(request):
         if ci_index > 0.1:
             replace_list = ['green'] * int(ci_index * 10)
             color_list[1:(int(ci_index * 10))] = replace_list
-        # print(fn1)
         fig = px.scatter_mapbox(fn1
                                 , lat='site_lat'
                                 , lon='site_lon'
@@ -650,23 +628,32 @@ def get_warnings_data(request):
                            plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
         graphJSON = json.dumps(fig, cls=enc_pltjson)
-
         three_plus = datetime.now() + timedelta(hours=3)
-        # print(three_plus)
         fn1 = fn1.loc[fn1['timestamp']<=three_plus,:]
-        # print(fn1)
-        # sites_list = list(fnl['site_name'].unique())
-        # sites_list.sort()
-        # print(sites_list)
-        # print(fn1.info())
         fig2 = make_subplots(rows=len(sites_list), cols=1,subplot_titles = sites_list)
         for idx in range(len(sites_list)):
             fig2.add_trace(go.Bar(
-                x=fn1.loc[fn1['site_name'] == sites_list[idx], 'timestamp'],
-                y=fn1.loc[fn1['site_name'] == sites_list[idx], 'forecast_cloud_index'], name=sites_list[idx]),
+                x=fn1.loc[(fn1['site_name'] == sites_list[idx]) & (fn1['Warning Category'] == 'Green'), 'timestamp'],
+                y=fn1.loc[(fn1['site_name'] == sites_list[idx]) & (
+                            fn1['Warning Category'] == 'Green'), 'forecast_cloud_index'], name=sites_list[idx]
+                , marker_color='green'),
+                row=idx + 1, col=1)
+            fig2.add_trace(go.Bar(
+                x=fn1.loc[(fn1['site_name'] == sites_list[idx]) & (fn1['Warning Category'] == 'Orange'), 'timestamp'],
+                y=fn1.loc[(fn1['site_name'] == sites_list[idx]) & (
+                            fn1['Warning Category'] == 'Orange'), 'forecast_cloud_index'], name=sites_list[idx]
+                , marker_color='orange'),
+                row=idx + 1, col=1)
+            fig2.add_trace(go.Bar(
+                x=fn1.loc[(fn1['site_name'] == sites_list[idx]) & (fn1['Warning Category'] == 'Red'), 'timestamp'],
+                y=fn1.loc[
+                    (fn1['site_name'] == sites_list[idx]) & (fn1['Warning Category'] == 'Red'), 'forecast_cloud_index'],
+                name=sites_list[idx]
+                , marker_color='red'),
                 row=idx + 1, col=1)
             fig2.add_hline(y=0.1,line_width=1, line_dash="dash", line_color="grey", opacity=0.7,)
-            fig2.update_yaxes( range=[0.0, 0.9], row=idx + 1, col=1)
+            fig2.update_yaxes(visible=False)
+
         # print(fn1)
         fig.update_layout(height=700, title_text="Forecast Cloud Index")
 
@@ -675,9 +662,7 @@ def get_warnings_data(request):
                            plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 30, 'b': 0, 'r': 0})
         graphJSON2 = json.dumps(fig2, cls=enc_pltjson)
-
         return JsonResponse({'data': graphJSON,'histos':graphJSON2}, status=200, safe=False)
-
 
 
 
@@ -691,9 +676,6 @@ def get_homepage_data(request):
         if group == "Admin":
             query = ""
         else:
-            # query = "SELECT site_client_name,site_lat,site_lon,timestamp,ghi_forecast,ghi_actual,forecast_cloud_index," \
-            #         f"site_name FROM dashboarding.v_final_dashboarding_view  WHERE site_client_name ='{client}' AND " \
-            #         f"forecast_cloud_index IS NOT NULL AND timestamp > '{time_string}' ORDER BY timestamp DESC LIMIT 1000"
             query = f"""SELECT vda.site_name, vda.timestamp, vda.wind_speed_10m_mps AS wind_speed_forecast, 
             vda.wind_direction_in_deg AS wind_direction_forecast, vda.temp_c AS wind_direction_forecast, 
             vda.nowcast_ghi_wpm2 AS ghi_forecast, vda.swdown2,vda.ci_data AS forecast_cloud_index, vda.tz, vda.ct_data, vda.ct_flag_data, 
@@ -721,9 +703,6 @@ def get_homepage_data(request):
         for x in df.loc[:, 'forecast_cloud_index'].index:
             if df['forecast_cloud_index'][x] > ci_index:
                 df['Graph Index'][x] = df[f'ghi_forecast'][x]
-
-        # fn1 = df.groupby(['site_name', 'timestamp', 'Warning Description', 'Warning Category']).aggregate(
-        #     {'site_lat': 'mean', 'site_lon': 'mean', 'forecast_cloud_index': 'mean', 'C_I_R': 'mean'}).reset_index()
         color_list = ['lightgreen', 'green', 'red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
 
         fig = px.scatter_mapbox(df
@@ -746,12 +725,10 @@ def get_homepage_data(request):
         graphJSON = json.dumps(fig, cls=enc_pltjson)
 
         variable = 'ghi'
-        # print(df)
-        # df = df.groupby(['timestamp',''])
-        # df_sites = pd.read_csv("static/client_site.csv")
+
         df_sites = get_site_client()
         sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
-        # df = df.loc[df['site_name']==sites[0]]
+
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
             x=df['timestamp'],
@@ -824,6 +801,8 @@ def update_on_site_change(request):
         ci_index = 0.1
         df = get_sql_data(query)
 
+        # print(query)
+
         df = df.groupby(['timestamp', 'site_name', 'client_name']).aggregate(
             {'ghi_forecast': 'mean', 'ghi_actual': 'mean', 'forecast_cloud_index': 'mean', 'site_lat': 'mean',
              'site_lon': 'mean'}).reset_index()
@@ -865,6 +844,7 @@ def update_on_site_change(request):
                 marker_size=10
             )
         )
+
         fig2.update_yaxes(showgrid=True, gridwidth=0.4, gridcolor='LightGrey')
         fig2.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',

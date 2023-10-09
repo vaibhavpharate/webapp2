@@ -76,13 +76,16 @@
             {#console.log(today);#}
             {#$('#start_date').val(today);#}
            // let last_twenty_days = new Date(now.setDate(now.getDate() - 25));
-            let last_twenty_days = new Date(now.setDate(now.getDate()));
+
+            let last_twenty_days = now.setDate(now.getDate() - 1);   // Setting Yesterday date
             let mom_date = moment(last_twenty_days).format("YYYY-MM-DD");
             {#console.log(yesterday)#}
             $('#start_date').val(mom_date);
 
             // Setting Two days Buffer
-            let next_two_says = new Date(last_twenty_days.setDate(last_twenty_days.getDate() + 3))
+            {#let next_two_says = new Date(last_twenty_days.setDate(last_twenty_days.getDate() + 3))#}
+            let next_two_says = now.setDate(now.getDate() + 2);
+
             next_two_says = moment(next_two_says).format("YYYY-MM-DD");
             $('#end_date').val(next_two_says);
             $('#variable').val();
