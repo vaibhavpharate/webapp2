@@ -35,8 +35,8 @@ from .decors import ajax_required
 from django.utils.decorators import method_decorator
 
 User = get_user_model()
-
-
+token = "pk.eyJ1IjoidmFpYmhhdnBoYXJhdGUiLCJhIjoiY2xuazFubDJnMXFtdDJrdzVhdHB5dThkYyJ9.SZBQ94MCcz7odz-WkOOs7w"
+px.set_mapbox_access_token(token)
 # Check if the request is from ajax
 def is_ajax(request):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -609,22 +609,46 @@ def get_warnings_data(request):
         if ci_index > 0.1:
             replace_list = ['green'] * int(ci_index * 10)
             color_list[1:(int(ci_index * 10))] = replace_list
-        fig = px.scatter_mapbox(fn1
-                                , lat='site_lat'
-                                , lon='site_lon'
-                                , center=dict(lat=20.59, lon=80.86),
-                                size='C_I_R',
-                                size_max=20,
-                                hover_name='site_name'
-
-                                , zoom=4,
-                                color='forecast_cloud_index'
-                                , opacity=0.4,
+        # fig = px.scatter_mapbox(fn1
+        #                         , lat='site_lat'
+        #                         , lon='site_lon'
+        #                         , center=dict(lat=20.59, lon=80.86),
+        #                         size='C_I_R',
+        #                         size_max=20,
+        #                         hover_name='site_name'
+        #
+        #                         , zoom=4,
+        #                         color='forecast_cloud_index'
+        #                         , opacity=0.4,
+        #                         height=700,
+        #                         color_continuous_scale=color_list
+        #                         , mapbox_style='open-street-map')
+        # # fig.add_trac
+        # fig.update_coloraxes(showscale=False)
+        fig = px.scatter_mapbox(fn1, lat='site_lat', lon='site_lon',
+                                 size='C_I_R',
+                                 hover_name='site_name',
+                                 hover_data={'C_I_R': False,
+                                             'Warning Category': False,
+                                             'timestamp': True},
                                 height=700,
-                                color_continuous_scale=color_list
-                                , mapbox_style='open-street-map')
-        # fig.add_trac
-        fig.update_coloraxes(showscale=False)
+                                 size_max=20,
+
+                                 color='Warning Category',
+                                 opacity=0.3, zoom=4,
+                                 color_discrete_sequence=['green', 'orange', 'red'])
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=fn1['site_lat'],
+                lon=fn1['site_lon'],
+                mode='markers+text',
+                text=fn1['site_name'],
+                textposition='bottom center',
+                marker=dict(size=5, color="green"),
+                textfont=dict(size=16, color='blue')
+            )
+        )
+        fig.update_layout(showlegend=False)
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                            plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
