@@ -615,18 +615,20 @@ def get_warnings_data(request):
                                 , center=dict(lat=20.59, lon=80.86),
                                 size='C_I_R',
                                 size_max=20,
-                                hover_name='site_name',
-                                hover_data=["timestamp", 'forecast_cloud_index', 'Warning Category']
+                                hover_name='site_name'
+
                                 , zoom=4,
                                 color='forecast_cloud_index'
                                 , opacity=0.4,
                                 height=700,
                                 color_continuous_scale=color_list
                                 , mapbox_style='open-street-map')
+        # fig.add_trac
         fig.update_coloraxes(showscale=False)
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                            plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
+        # fig.update_layout(hovermode=False)
         graphJSON = json.dumps(fig, cls=enc_pltjson)
         three_plus = datetime.now() + timedelta(hours=3)
         fn1 = fn1.loc[fn1['timestamp']<=three_plus,:]
