@@ -636,7 +636,7 @@ def get_warnings_data(request):
 
                                  color='Warning Category',
                                  opacity=0.3, zoom=4,
-                                 color_discrete_sequence=['green', 'orange', 'red'])
+                                 color_discrete_sequence=['green', 'red', 'red'])
         fig.add_trace(
             go.Scattermapbox(
                 lat=fn1['site_lat'],
@@ -648,7 +648,7 @@ def get_warnings_data(request):
                 textfont=dict(size=16, color='blue')
             )
         )
-        fig.update_layout(showlegend=False)
+        # fig.update_layout(showlegend=False)
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                            plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
