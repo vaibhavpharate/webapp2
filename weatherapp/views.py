@@ -224,18 +224,7 @@ def get_forecast_table(request):
         yesterday = datetime.now()
         time_string = datetime.strftime(yesterday, '%m-%d-%y %H:%M:%S')
         query = ""
-        d_swap = {'No Cloud': 'No Cloud',
-                  13.0: 'High semitransparent thick clouds',
-                  12.0: 'High semitransparent moderately thick clouds',
-                  14.0: 'High semitransparent above low or medium clouds',
-                  8.0: 'High opaque clouds',
-                  6.0: 'Low clouds',
-                  1.0: 'Cloud free land',
-                  11.0: 'High semitransparent thin clouds',
-                  7.0: 'Mid level clouds',
-                  9.0: 'Very high opaque clouds',
-                  10.0: 'Very High very opaque clouds',
-                  5.0: 'Very Low clouds'}
+
         if user_group == "Admin":
            query = "SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
                    ",ghi_forecast,wind_speed_actual,wind_speed_forecast,forecast_cloud_type FROM dashboarding.v_final_dashboarding_view WHERE timestamp >= '{time_string}' " \
@@ -610,27 +599,13 @@ def get_warnings_data(request):
         if ci_index > 0.1:
             replace_list = ['green'] * int(ci_index * 10)
             color_list[1:(int(ci_index * 10))] = replace_list
-        # fig = px.scatter_mapbox(fn1
-        #                         , lat='site_lat'
-        #                         , lon='site_lon'
-        #                         , center=dict(lat=20.59, lon=80.86),
-        #                         size='C_I_R',
-        #                         size_max=20,
-        #                         hover_name='site_name'
-        #
-        #                         , zoom=4,
-        #                         color='forecast_cloud_index'
-        #                         , opacity=0.4,
-        #                         height=700,
-        #                         color_continuous_scale=color_list
-        #                         , mapbox_style='open-street-map')
-        # # fig.add_trac
-        # fig.update_coloraxes(showscale=False)
+
         fig = px.scatter_mapbox(fn1, lat='site_lat', lon='site_lon',
                                  size='C_I_R',
                                  hover_name='site_name',
                                  hover_data={'C_I_R': False,
                                              'Warning Category': False,
+                                             'forecast_cloud_index': True,
                                              'timestamp': True},
                                 height=700,
                                  size_max=20,
@@ -718,7 +693,7 @@ def get_homepage_data(request):
 
         df = df.groupby(['timestamp','site_name','client_name']).aggregate(
             {'ghi_forecast':'mean','ghi_actual':'mean','forecast_cloud_index':'mean','site_lat':'mean','site_lon':'mean'}).reset_index()
-        df['C_I_R'] = df['forecast_cloud_index'] * 100
+        df['C_I_R'] = df['forecast_cloud_index'] * 125
         df['Warning Description'] = None
         df['Warning Category'] = None
         df['Graph Index'] = None
@@ -738,6 +713,7 @@ def get_homepage_data(request):
                                 hover_name='site_name',
                                 hover_data={'C_I_R': False,
                                             'Warning Category': False,
+                                            'forecast_cloud_index': True,
                                             'timestamp': True},
                                 height=350,
                                 size_max=20,
@@ -753,7 +729,7 @@ def get_homepage_data(request):
                 mode='markers+text',
                 text=fn1['site_name'],
                 textposition='bottom center',
-                marker=dict(size=5, color="green"),
+                marker=dict(size=9, color="green"),
                 textfont=dict(size=16, color='blue')
             )
         )
@@ -875,9 +851,6 @@ def update_on_site_change(request):
         for x in df.loc[:, 'forecast_cloud_index'].index:
             if df['forecast_cloud_index'][x] > ci_index:
                 df['Graph Index'][x] = df[f'ghi_forecast'][x]
-
-        # fn1 = df.groupby(['site_name', 'timestamp', 'Warning Description', 'Warning Category']).aggregate(
-        #     {'site_lat': 'mean', 'site_lon': 'mean', 'forecast_cloud_index': 'mean', 'C_I_R': 'mean'}).reset_index()
         color_list = ['lightgreen', 'green', 'red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
