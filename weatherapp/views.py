@@ -80,10 +80,11 @@ def get_sql_data(query):
         return df
 def get_site_client(client_name = None):
     if client_name==None:
-        df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc WHERE sc.type='Solar'")
+        df = get_sql_data("select sc.site_name,sc.client_name from configs.site_config sc WHERE sc.type='Solar' and sc.site_status='Active'")
         return df
     else:
-        df = get_sql_data(f"select sc.site_name,sc.client_name from configs.site_config sc where client_name= '{client_name}' AND sc.type='Solar'")
+        df = get_sql_data(f"select sc.site_name,sc.client_name from configs.site_config sc where client_name= '{client_name}' "
+                          f"AND sc.type='Solar' and sc.site_status='Active'")
         return df
 
 def convert_data_to_json(df: pd.DataFrame):
@@ -389,8 +390,6 @@ def get_fw_data(request):
         # Forecast method not exim
         ci_index = 0.1
         df = get_sql_data(query)
-
-
         df = df.groupby(['timestamp']).aggregate(
             {f'{variable}_actual': 'mean', f'{variable}_forecast': 'mean',
              'forecast_cloud_index': 'mean'}).reset_index()
@@ -410,7 +409,8 @@ def get_fw_data(request):
             if df['forecast_cloud_index'][x] > ci_index:
                 df['Graph Index'][x] = df[f'{variable}_forecast'][x]
 
-        # df.to_csv("forecast_data.csv")
+        # print(df.loc[:,["Graph Index",'forecast_cloud_index']])
+        print(df['forecast_cloud_index'].describe())
         readings = {'ghi':"W/m2","temp":f"{chr(176)} C",'wind_speed':"m/s"}
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -546,6 +546,7 @@ def get_overview_data(request):
 
         df_c = df_c.loc[:, send_list]
         df_c['capacity'] = df_c['capacity'].fillna("None")
+        df_c = df_c.loc[df_c['site_status']=='Active',:]
         return JsonResponse({'data': df_c.to_dict('records')}, status=200, safe=False)
 
 
@@ -636,7 +637,7 @@ def get_warnings_data(request):
 
                                  color='Warning Category',
                                  opacity=0.3, zoom=4,
-                                 color_discrete_sequence=['green', 'red', 'red'])
+                                 color_discrete_sequence=['green','red','red','red', 'red'])
         fig.add_trace(
             go.Scattermapbox(
                 lat=fn1['site_lat'],
@@ -648,7 +649,7 @@ def get_warnings_data(request):
                 textfont=dict(size=16, color='blue')
             )
         )
-        # fig.update_layout(showlegend=False)
+        fig.update_layout(showlegend=False)
         fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
                            plot_bgcolor='rgba(0,0,0,0)',
             margin={'l': 0, 't': 0, 'b': 0, 'r': 0} )
@@ -711,50 +712,79 @@ def get_homepage_data(request):
             FROM forecast.v_db_api vda JOIN configs.site_config conf ON vda.site_name = conf.site_name 
             LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name) 
             WHERE conf.client_name = '{client}' AND vda.ci_data IS NOT NULL  AND vda.timestamp > '{time_string}'
-            AND vda.site_name='{site_name}'  ORDER BY timestamp DESC"""
+        ORDER BY timestamp DESC"""
         ci_index = 0.1
         df = get_sql_data(query)
 
-        df = df.groupby(['timestamp','site_name','client_name']).aggregate({'ghi_forecast':'mean','ghi_actual':'mean','forecast_cloud_index':'mean','site_lat':'mean','site_lon':'mean'}).reset_index()
-
+        df = df.groupby(['timestamp','site_name','client_name']).aggregate(
+            {'ghi_forecast':'mean','ghi_actual':'mean','forecast_cloud_index':'mean','site_lat':'mean','site_lon':'mean'}).reset_index()
         df['C_I_R'] = df['forecast_cloud_index'] * 100
         df['Warning Description'] = None
         df['Warning Category'] = None
         df['Graph Index'] = None
-        df.loc[df['forecast_cloud_index'] > 0.1, "Warning Category"] = "Red"
+        df.loc[
+            (df['forecast_cloud_index'] > 0.1) & (df['forecast_cloud_index'] <= 0.25), "Warning Category"] = "Orange"
         df.loc[df['forecast_cloud_index'] <= 0.1, "Warning Category"] = "Green"
+        df.loc[df['forecast_cloud_index'] > 0.25, "Warning Category"] = "Red"
         df.loc[df['forecast_cloud_index'] > 0.1, "Warning Description"] = "Cloud Warning"
         df.loc[df['forecast_cloud_index'] <= 0.1, "Warning Description"] = "No Warning"
-
+        fn1 = df.copy()
         for x in df.loc[:, 'forecast_cloud_index'].index:
             if df['forecast_cloud_index'][x] > ci_index:
                 df['Graph Index'][x] = df[f'ghi_forecast'][x]
-        color_list = ['lightgreen', 'green', 'red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
-
-        fig = px.scatter_mapbox(df
-                                , lat='site_lat'
-                                , lon='site_lon'
-                                , center=dict(lat=20.59, lon=80.86),
+        color_list = ['lightgreen', 'green', 'orange','red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
+        fig = px.scatter_mapbox(fn1, lat='site_lat', lon='site_lon',
                                 size='C_I_R',
-                                size_max=20,
                                 hover_name='site_name',
-                                hover_data=["timestamp", 'forecast_cloud_index', 'Warning Category']
-                                , zoom=3,
-                                color='forecast_cloud_index'
-                                , opacity=0.4,
+                                hover_data={'C_I_R': False,
+                                            'Warning Category': False,
+                                            'timestamp': True},
                                 height=350,
-                                color_continuous_scale=color_list
-                                , mapbox_style='open-street-map')
-        fig.update_coloraxes(showscale=False)
-        fig.update_layout(
-            margin={'l': 0, 't': 0, 'b': 0, 'r': 0},showlegend=False,paper_bgcolor='rgb(0,0,0)' )
+                                size_max=20,
+
+                                color='Warning Category',
+                                opacity=0.3, zoom=3,
+                                # color_discrete_sequence=['green', 'orange','red', 'red', 'red', 'red']
+                                )
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=fn1['site_lat'],
+                lon=fn1['site_lon'],
+                mode='markers+text',
+                text=fn1['site_name'],
+                textposition='bottom center',
+                marker=dict(size=5, color="green"),
+                textfont=dict(size=16, color='blue')
+            )
+        )
+        fig.update_layout(showlegend=False)
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)',
+                          plot_bgcolor='rgba(0,0,0,0)',
+                          margin={'l': 0, 't': 0, 'b': 0, 'r': 0})
+        # fig = px.scatter_mapbox(df
+        #                         , lat='site_lat'
+        #                         , lon='site_lon'
+        #                         , center=dict(lat=20.59, lon=80.86),
+        #                         size='C_I_R',
+        #                         size_max=20,
+        #                         hover_name='site_name',
+        #                         hover_data=["timestamp", 'forecast_cloud_index', 'Warning Category']
+        #                         , zoom=3,
+        #                         color='forecast_cloud_index'
+        #                         , opacity=0.4,
+        #                         height=350,
+        #                         color_continuous_scale=color_list
+        #                         , mapbox_style='open-street-map')
+        # fig.update_coloraxes(showscale=False)
+        # fig.update_layout(
+        #     margin={'l': 0, 't': 0, 'b': 0, 'r': 0},showlegend=False,paper_bgcolor='rgb(0,0,0)' )
         graphJSON = json.dumps(fig, cls=enc_pltjson)
 
         variable = 'ghi'
 
         df_sites = get_site_client()
         sites = list(df_sites.loc[df_sites['client_name']==client,'site_name'])
-
+        df = df.loc[df['site_name']==site_name,:]
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
             x=df['timestamp'],
