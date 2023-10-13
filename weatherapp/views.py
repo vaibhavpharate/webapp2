@@ -599,7 +599,7 @@ def get_warnings_data(request):
         if ci_index > 0.1:
             replace_list = ['green'] * int(ci_index * 10)
             color_list[1:(int(ci_index * 10))] = replace_list
-
+        color_list = fn1['Warning Category'].str.lower().unique()
         fig = px.scatter_mapbox(fn1, lat='site_lat', lon='site_lon',
                                  size='C_I_R',
                                  hover_name='site_name',
@@ -612,7 +612,7 @@ def get_warnings_data(request):
 
                                  color='Warning Category',
                                  opacity=0.3, zoom=4,
-                                 color_discrete_sequence=['green','red','red','red', 'red'])
+                                 color_discrete_sequence=color_list)
         fig.add_trace(
             go.Scattermapbox(
                 lat=fn1['site_lat'],
@@ -707,7 +707,8 @@ def get_homepage_data(request):
         for x in df.loc[:, 'forecast_cloud_index'].index:
             if df['forecast_cloud_index'][x] > ci_index:
                 df['Graph Index'][x] = df[f'ghi_forecast'][x]
-        color_list = ['lightgreen', 'green', 'orange','red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
+        # color_list = ['lightgreen', 'green', 'orange','red', 'red', 'red', 'red', 'red', 'crimson', 'crimson', 'crimson']
+        color_list = fn1['Warning Category'].str.lower().unique()
         fig = px.scatter_mapbox(fn1, lat='site_lat', lon='site_lon',
                                 size='C_I_R',
                                 hover_name='site_name',
@@ -720,7 +721,7 @@ def get_homepage_data(request):
 
                                 color='Warning Category',
                                 opacity=0.3, zoom=3,
-                                # color_discrete_sequence=['green', 'orange','red', 'red', 'red', 'red']
+                                color_discrete_sequence=color_list
                                 )
         fig.add_trace(
             go.Scattermapbox(
