@@ -268,7 +268,7 @@ def get_forecast_table(request):
                 FROM forecast.v_db_api vda
                          JOIN configs.site_config conf ON vda.site_name = conf.site_name
                          LEFT JOIN site_actual.site_actual sa on (vda.timestamp,vda.site_name) = (sa.timestamp,sa.site_name)
-                WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' AND vda.forecast_method = 'exim'
+                WHERE vda.timestamp >= '{time_string}' AND conf.client_name = '{username}' 
                 AND conf.type='Solar'  ORDER BY vda.timestamp desc LIMIT 10000;"""
 
             # query = f"SELECT site_client_name, forecast_cloud_index , timestamp, site_name,temp_actual,temp_forecast,ghi_actual" \
