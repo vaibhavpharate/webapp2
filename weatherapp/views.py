@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import  csrf_protect
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import Permission
 
@@ -102,7 +103,7 @@ def create_groups(request):
     messages.success(request, "Groups Created > Admin and Client")
     return redirect('admin_home')
 
-
+@csrf_protect
 def admin_login(request):
     form = AuthenticationForm()
     if request.method == "POST":
@@ -176,6 +177,8 @@ def create_client(request):
 
 
 # @user_passes_test(lambda u: u.is_authenticated , login_url='homepage')
+
+@csrf_protect
 def client_login(request):
     form = AuthenticationForm()
     if request.method == "POST":
